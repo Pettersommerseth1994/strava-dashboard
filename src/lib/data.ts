@@ -14,13 +14,13 @@ export type Detail = {
 }
 
 export const SPORT_COLORS: Record<string, string> = {
-  Løpetur: 'oklch(0.72 0.19 45)',
-  Langrenn: 'oklch(0.7 0.15 235)',
-  Rulleski: 'oklch(0.74 0.16 160)',
-  Sykkeltur: 'oklch(0.8 0.16 95)',
-  Styrketrening: 'oklch(0.68 0.2 305)',
-  Treningsøkt: 'oklch(0.7 0.19 0)',
-  Annet: 'oklch(0.65 0.02 260)',
+  Løpetur: 'var(--sp-run)',
+  Langrenn: 'var(--sp-ski)',
+  Rulleski: 'var(--sp-roller)',
+  Sykkeltur: 'var(--sp-bike)',
+  Styrketrening: 'var(--sp-strength)',
+  Treningsøkt: 'var(--sp-workout)',
+  Annet: 'var(--sp-other)',
 }
 export const MAIN_SPORTS = ['Løpetur', 'Langrenn', 'Rulleski', 'Sykkeltur', 'Styrketrening', 'Treningsøkt']
 export const sportOf = (t: string) => (MAIN_SPORTS.includes(t) ? t : 'Annet')
@@ -28,7 +28,7 @@ export const sportColor = (t: string) => SPORT_COLORS[sportOf(t)]
 export const MONTHS = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des']
 export const MONTHS_LONG = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember']
 export const WEEKDAYS = ['man', 'tir', 'ons', 'tor', 'fre', 'lør', 'søn']
-export const ZONE_COLORS = ['oklch(0.7 0.08 230)', 'oklch(0.75 0.15 160)', 'oklch(0.82 0.16 95)', 'oklch(0.75 0.18 55)', 'oklch(0.65 0.22 25)', 'oklch(0.55 0.24 10)']
+export const ZONE_COLORS = ['var(--z1)', 'var(--z2)', 'var(--z3)', 'var(--z4)', 'var(--z5)', 'var(--z6)']
 export const isFoot = (t: string) => t === 'Løpetur' || t === 'Gåtur'
 
 // ---------- formatering ----------

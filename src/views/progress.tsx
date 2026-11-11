@@ -55,13 +55,13 @@ export function ProgressChart({ title, desc, pts, fmt, reversed, win = 10, color
           <Scatter data={pts} fill="var(--color-y)" fillOpacity={0.4} isAnimationActive={false} className="cursor-pointer"
             onClick={(d: unknown) => { const o = d as { id?: string; payload?: { id?: string } }; const id = o.id ?? o.payload?.id; if (id) open(id) }} />
           {!noTrend && <Line data={data.trend} dataKey="y" stroke="var(--color-y)" strokeWidth={2.5} dot={false} isAnimationActive={false} tooltipType="none" />}
-          {best && <Line data={data.step} dataKey="y" type={best === 'step' ? 'stepAfter' : 'monotone'} stroke="oklch(0.82 0.17 85)" strokeWidth={2} strokeDasharray={best === 'window90' ? '5 4' : undefined} dot={false} isAnimationActive={false} tooltipType="none" />}
+          {best && <Line data={data.step} dataKey="y" type={best === 'step' ? 'stepAfter' : 'monotone'} stroke="var(--foreground)" strokeWidth={2} strokeDasharray={best === 'window90' ? '5 4' : undefined} dot={false} isAnimationActive={false} tooltipType="none" />}
         </ComposedChart>
       </ChartContainer>
       <p className="text-muted-foreground mt-2 text-xs">
         {!noTrend && <span className="mr-3 inline-flex items-center gap-1"><i className="inline-block h-0.5 w-4" style={{ background: color }} />Glidende snitt ({win} økter)</span>}
-        {best === 'step' && <span className="inline-flex items-center gap-1"><i className="inline-block h-0.5 w-4 bg-amber-400" />Beste hittil</span>}
-        {best === 'window90' && <span className="inline-flex items-center gap-1"><i className="inline-block h-0.5 w-4 bg-amber-400" />Beste siste 90 dager</span>}
+        {best === 'step' && <span className="inline-flex items-center gap-1"><i className="inline-block h-0.5 w-4 bg-foreground" />Beste hittil</span>}
+        {best === 'window90' && <span className="inline-flex items-center gap-1"><i className="inline-block h-0.5 w-4 bg-foreground" />Beste siste 90 dager</span>}
       </p>
     </ChartCard>
   )
@@ -249,7 +249,7 @@ export function Form() {
         </div>
       )}
       <ChartCard title="Form, tretthet og balanse" desc="Basert på alle økter og estimert TRIMP-belastning fra puls. CTL = kondisjon, ATL = akutt tretthet, TSB = CTL − ATL.">
-        <ChartContainer config={{ ctl: { label: 'Form (CTL)', color: 'oklch(0.7 0.15 235)' }, atl: { label: 'Tretthet (ATL)', color: 'oklch(0.72 0.19 45)' }, tsb: { label: 'Balanse (TSB)', color: 'oklch(0.74 0.16 160)' } }} className="h-80 w-full">
+        <ChartContainer config={{ ctl: { label: 'Form (CTL)', color: 'var(--brand)' }, atl: { label: 'Tretthet (ATL)', color: 'var(--sp-roller)' }, tsb: { label: 'Balanse (TSB)', color: 'var(--muted-foreground)' } }} className="h-80 w-full">
           <LineChart data={view}>
             <CartesianGrid vertical={false} />
             <XAxis dataKey="x" tickLine={false} axisLine={false} minTickGap={40} tickFormatter={(v) => fmtMonth(v)} />
@@ -264,7 +264,7 @@ export function Form() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <ChartCard title="Ukentlig volum" desc="Kilometer per uke med 4-ukers snitt (idrettsfilter gjelder)">
-          <ChartContainer config={{ km: { label: 'km', color: 'oklch(0.7 0.15 235)' }, avg: { label: '4-ukers snitt', color: 'oklch(0.82 0.17 85)' } }} className="h-64 w-full">
+          <ChartContainer config={{ km: { label: 'km', color: 'var(--sp-roller)' }, avg: { label: '4-ukers snitt', color: 'var(--brand)' } }} className="h-64 w-full">
             <ComposedChart data={weekly}>
               <CartesianGrid vertical={false} />
               <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={30} />

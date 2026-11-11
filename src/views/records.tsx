@@ -102,7 +102,7 @@ export function Records() {
               <TableBody>
                 {bests.map((r) => (
                   <TableRow key={r.k} className={`cursor-pointer ${r.k === beK ? 'bg-muted' : ''}`} onClick={() => setBeKey(r.k)}>
-                    <TableCell className="font-medium"><span className="flex items-center gap-2"><Trophy className="size-3.5 text-amber-500" />{BE_LABELS[r.k]}</span></TableCell>
+                    <TableCell className="font-medium"><span className="flex items-center gap-2"><Trophy className="size-3.5 text-[var(--brand)]" />{BE_LABELS[r.k]}</span></TableCell>
                     <TableCell className="text-right font-semibold tabular-nums">
                       <button className="hover:underline" onClick={(e) => { e.stopPropagation(); open(r.best.id) }}>{fmtClock(r.best.be![r.k][0])}</button>
                     </TableCell>
@@ -121,7 +121,7 @@ export function Records() {
                 <YAxis dataKey="y" type="number" reversed domain={['auto', 'auto']} tickLine={false} axisLine={false} width={50} tickFormatter={(v) => fmtClock(v)} />
                 <ChartTooltip cursor={false} content={({ payload }) => { const p = payload?.[0]?.payload as { n?: string; d?: string; y?: number } | undefined; if (!p?.n) return null; return <div className="bg-background rounded-lg border px-2.5 py-1.5 text-xs shadow-xl"><p className="font-medium">{p.n}</p><p className="text-muted-foreground">{fmtDate(p.d!)} · {fmtClock(p.y!)}</p></div> }} />
                 <Scatter data={prog.pts} fill="var(--color-y)" fillOpacity={0.45} onClick={(d: unknown) => { const id = (d as { id?: string; payload?: { id?: string } }); open(id.id ?? id.payload?.id ?? null) }} className="cursor-pointer" isAnimationActive={false} />
-                <Line data={prog.pr} dataKey="y" type="stepAfter" stroke="oklch(0.8 0.17 80)" strokeWidth={2.5} dot={{ r: 4, fill: 'oklch(0.8 0.17 80)' }} activeDot={{ r: 6, onClick: (_: unknown, e: unknown) => { const id = (e as { payload?: { id?: string } }).payload?.id; if (id) open(id) } }} isAnimationActive={false} />
+                <Line data={prog.pr} dataKey="y" type="stepAfter" stroke="var(--brand)" strokeWidth={2.5} dot={{ r: 4, fill: 'var(--brand)' }} activeDot={{ r: 6, onClick: (_: unknown, e: unknown) => { const id = (e as { payload?: { id?: string } }).payload?.id; if (id) open(id) } }} isAnimationActive={false} />
               </ComposedChart>
             </ChartContainer>
           </ChartCard>
@@ -129,7 +129,7 @@ export function Records() {
       )}
 
       <section>
-        <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold"><Award className="size-5 text-amber-500" />Toppresultater</h2>
+        <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold"><Award className="size-5 text-[var(--brand)]" />Toppresultater</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <RecCard icon={Route} title="Lengste distanse" value={longest ? `${fmtKm(longest.dist, 2)} km` : '–'} a={longest} onClick={() => longest && open(longest.id)} />
           <RecCard icon={Timer} title="Lengste tid" value={longestT ? fmtDur(longestT.mov) : '–'} a={longestT} onClick={() => longestT && open(longestT.id)} />

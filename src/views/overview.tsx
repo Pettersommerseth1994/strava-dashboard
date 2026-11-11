@@ -30,12 +30,12 @@ function Heatmap({ acts, to, onDay }: { acts: Activity[]; to: string; onDay: (d:
   const start = addDays(end, -53 * 7 + 1)
   const cells = Array.from({ length: 53 * 7 }, (_, i) => { const k = addDays(start, i); return { k, v: byDay.get(k) ?? 0, future: k > to } })
   const lvl = (v: number) => (v === 0 ? 0 : v < 1 ? 1 : v < 2 ? 2 : v < 3.5 ? 3 : 4)
-  const bg = ['bg-muted', 'bg-orange-200 dark:bg-orange-950', 'bg-orange-300 dark:bg-orange-800', 'bg-orange-500 dark:bg-orange-600', 'bg-red-600 dark:bg-orange-400']
+  const op = [0, 0.25, 0.45, 0.7, 1]
   return (
     <div className="overflow-x-auto pb-1">
       <div className="grid w-max grid-flow-col grid-rows-7 gap-[3px]">
         {cells.map((c) => c.future ? <div key={c.k} className="size-3" /> : (
-          <button key={c.k} onClick={() => c.v > 0 && onDay(c.k)} title={`${fmtDate(c.k)} · ${c.v ? fmtNum(c.v, 1) + ' t' : 'hvile'}`} className={`size-3 rounded-[3px] ${bg[lvl(c.v)]} ${c.v ? 'hover:ring-foreground cursor-pointer hover:ring-1' : 'cursor-default'}`} />
+          <button key={c.k} onClick={() => c.v > 0 && onDay(c.k)} title={`${fmtDate(c.k)} · ${c.v ? fmtNum(c.v, 1) + ' t' : 'hvile'}`} style={lvl(c.v) ? { background: `color-mix(in oklch, var(--brand) ${op[lvl(c.v)] * 100}%, transparent)` } : undefined} className={`size-3 rounded-[3px] ${lvl(c.v) ? '' : 'bg-muted'} ${c.v ? 'hover:ring-foreground cursor-pointer hover:ring-1' : 'cursor-default'}`} />
         ))}
       </div>
     </div>
@@ -138,12 +138,12 @@ export function Overview() {
           </ul>
         </ChartCard>
         <ChartCard title="Ukedag" desc={m.label}>
-          <ChartContainer config={{ v: { label: m.label, color: 'oklch(0.72 0.19 45)' } }} className="h-56 w-full">
+          <ChartContainer config={{ v: { label: m.label, color: 'var(--sp-roller)' } }} className="h-56 w-full">
             <BarChart data={weekday}><CartesianGrid vertical={false} /><XAxis dataKey="d" tickLine={false} axisLine={false} /><ChartTooltip content={<ChartTooltipContent hideLabel />} /><Bar dataKey="v" fill="var(--color-v)" radius={4} /></BarChart>
           </ChartContainer>
         </ChartCard>
         <ChartCard title="Tid på døgnet" desc={`${m.label} etter starttidspunkt`}>
-          <ChartContainer config={{ v: { label: m.label, color: 'oklch(0.7 0.15 235)' } }} className="h-56 w-full">
+          <ChartContainer config={{ v: { label: m.label, color: 'var(--sp-roller)' } }} className="h-56 w-full">
             <BarChart data={hours}><CartesianGrid vertical={false} /><XAxis dataKey="h" tickLine={false} axisLine={false} interval={2} /><ChartTooltip content={<ChartTooltipContent hideLabel />} /><Bar dataKey="v" fill="var(--color-v)" radius={3} /></BarChart>
           </ChartContainer>
         </ChartCard>

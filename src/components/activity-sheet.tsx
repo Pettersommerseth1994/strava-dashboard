@@ -108,7 +108,7 @@ export function ActivitySheet() {
         <div className="space-y-5 p-5 pt-2">
           {(be.some((b) => b.isPr) || ranks.length > 0) && (
             <div className="flex flex-wrap gap-1.5">
-              {be.filter((b) => b.isPr).map((b) => <Badge key={b.k} className="bg-amber-500/15 text-amber-500"><Trophy className="size-3" />Rekord {BE_LABELS[b.k]}</Badge>)}
+              {be.filter((b) => b.isPr).map((b) => <Badge key={b.k} className="bg-[color-mix(in_oklch,var(--brand)_18%,transparent)] text-[var(--brand)]"><Trophy className="size-3" />Rekord {BE_LABELS[b.k]}</Badge>)}
               {be.filter((b) => !b.isPr && b.prThen).map((b) => <Badge key={b.k} variant="outline">PR da · {BE_LABELS[b.k]}</Badge>)}
               {ranks.map((r) => <Badge key={r.label} variant="secondary">#{r.n} {r.label} ({r.of} økter)</Badge>)}
             </div>
@@ -175,7 +175,7 @@ export function ActivitySheet() {
                   return (
                     <div key={i} className="grid grid-cols-[2rem_1fr_3.5rem_3rem] items-center gap-2 text-xs sm:grid-cols-[2rem_1fr_4rem_3rem_3rem]">
                       <span className="text-muted-foreground tabular-nums">{i + 1}</span>
-                      <div className="bg-muted h-4 overflow-hidden rounded"><div className="h-full rounded" style={{ width: `${w}%`, background: s[0] === fast ? 'oklch(0.75 0.16 160)' : color, opacity: s[0] === fast ? 1 : 0.75 }} /></div>
+                      <div className="bg-muted h-4 overflow-hidden rounded"><div className="h-full rounded" style={{ width: `${w}%`, background: s[0] === fast ? 'var(--brand)' : 'var(--sp-roller)', opacity: s[0] === fast ? 1 : 0.6 }} /></div>
                       <span className="text-right tabular-nums">{foot ? fmtPaceSec(s[0]) : fmtNum(3600 / s[0], 1) + ' km/t'}</span>
                       <span className="text-muted-foreground text-right tabular-nums">{s[1] ? `${s[1]} ♥` : ''}</span>
                       <span className="text-muted-foreground hidden text-right tabular-nums sm:block">{s[2] != null ? `${s[2] > 0 ? '+' : ''}${s[2]} m` : ''}</span>

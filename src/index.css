@@ -128,3 +128,28 @@
     @apply font-sans;
     }
 }
+/* ---- Dashboard-palett: én aksentfarge + kjølig nøytral skala ---- */
+:root {
+  --brand: oklch(0.66 0.17 45);
+  --sp-run: var(--brand);
+  --sp-ski: oklch(0.42 0.07 255);
+  --sp-roller: oklch(0.58 0.07 255);
+  --sp-bike: oklch(0.72 0.06 255);
+  --sp-strength: oklch(0.83 0.035 255);
+  --sp-workout: oklch(0.3 0.04 255);
+  --sp-other: oklch(0.9 0.01 255);
+  --z1: oklch(0.85 0.03 255); --z2: oklch(0.68 0.06 255); --z3: oklch(0.8 0.08 60);
+  --z4: oklch(0.72 0.13 50); --z5: oklch(0.63 0.17 42); --z6: oklch(0.5 0.17 35);
+}
+.dark {
+  --brand: oklch(0.73 0.16 52);
+  --sp-run: var(--brand);
+  --sp-ski: oklch(0.86 0.05 255);
+  --sp-roller: oklch(0.7 0.07 255);
+  --sp-bike: oklch(0.56 0.07 255);
+  --sp-strength: oklch(0.44 0.05 255);
+  --sp-workout: oklch(0.95 0.015 255);
+  --sp-other: oklch(0.34 0.02 255);
+  --z1: oklch(0.42 0.04 255); --z2: oklch(0.62 0.06 255); --z3: oklch(0.55 0.08 60);
+  --z4: oklch(0.65 0.12 52); --z5: oklch(0.74 0.16 52); --z6: oklch(0.84 0.13 70);
+}

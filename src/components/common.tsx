@@ -11,7 +11,7 @@ export function Delta({ cur, prev, invert }: { cur: number; prev: number; invert
   const good = invert ? pct < 0 : pct > 0
   const Icon = pct >= 0 ? ArrowUpRight : ArrowDownRight
   return (
-    <span className={cn('inline-flex items-center text-xs font-medium tabular-nums', Math.abs(pct) < 0.5 ? 'text-muted-foreground' : good ? 'text-emerald-500' : 'text-rose-500')}>
+    <span className={cn('inline-flex items-center text-xs font-medium tabular-nums', Math.abs(pct) < 0.5 ? 'text-muted-foreground' : good ? 'text-[var(--brand)]' : 'text-muted-foreground')}>
       <Icon className="size-3.5" />{Math.abs(pct).toFixed(0)}%
     </span>
   )
@@ -19,14 +19,11 @@ export function Delta({ cur, prev, invert }: { cur: number; prev: number; invert
 
 export function Kpi({ icon: Icon, label, value, sub, delta }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; sub?: string; delta?: ReactNode }) {
   return (
-    <Card size="sm">
-      <CardContent className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">{label}</p>
-          <p className="mt-1 truncate text-2xl font-semibold tabular-nums">{value}</p>
-          <p className="text-muted-foreground mt-0.5 flex items-center gap-1.5 text-xs">{delta}{sub}</p>
-        </div>
-        <div className="bg-muted text-muted-foreground rounded-lg p-2"><Icon className="size-4" /></div>
+    <Card size="sm" className="gap-0">
+      <CardContent className="min-w-0">
+        <p className="text-muted-foreground flex items-center gap-1.5 text-[11px] font-medium tracking-wide uppercase"><Icon className="size-3.5 shrink-0" /><span className="truncate">{label}</span></p>
+        <p className="mt-1.5 text-xl leading-tight font-semibold tracking-tight whitespace-nowrap tabular-nums">{value}</p>
+        <p className="text-muted-foreground mt-1 flex min-h-4 items-center gap-1.5 text-[11px] whitespace-nowrap">{delta}<span className="truncate">{sub}</span></p>
       </CardContent>
     </Card>
   )

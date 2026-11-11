@@ -8,6 +8,8 @@ Interaktivt dashboard for Strava-eksport (Vite, React, Tailwind, shadcn/ui, Rech
 - Progresjon: pace, beste 5 km/10 km m.fl., VO2 maks (VDOT-estimat), makspuls, hvilepuls, effektivitet, kadens, watt og «bygg din egen graf»
 - Form (CTL/ATL/TSB), ukentlig volum og pulssoner over tid
 - Utforsker (valgfri X/Y), økttabell med søk, sortering og CSV-eksport
+- **Innsikt**: panel som glir inn fra høyre med automatisk genererte fakta og sammenligninger. «Ny innsikt» stokker
+- **Spør dataen**: chat med Claude som henter tall via verktøy over dataene. Krever egen Anthropic API-nøkkel som lagres kun i nettleseren og sendes direkte til api.anthropic.com
 - Detaljpanel per økt: nøkkeltall, pulssoner, puls/fart/høyde-profil, kilometersplitter. Delbar lenke via `#a=<id>`
 
 ## Oppdatere data
