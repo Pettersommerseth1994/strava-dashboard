@@ -26,6 +26,9 @@ function useTheme() {
   return [dark, () => setDark((d) => !d)] as const
 }
 
+/** Chatten er skjult inntil videre – sett til true for å vise «Spør dataen» igjen */
+const SHOW_CHAT = false
+
 const TABS = [
   ['oversikt', 'Oversikt'], ['rekorder', 'Rekorder'], ['progresjon', 'Progresjon'], ['form', 'Form'], ['utforsker', 'Utforsker'], ['okter', 'Økter'],
 ] as const
@@ -59,9 +62,11 @@ export default function App() {
               <Button variant={insight ? 'secondary' : 'ghost'} size="sm" onClick={() => setInsight(!insight)} className="gap-1.5" aria-pressed={insight}>
                 <Sparkles className="text-[var(--brand)]" /><span className="hidden sm:inline">Innsikt</span>
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => setChat(true)} className="gap-1.5">
-                <MessageSquare /><span className="hidden sm:inline">Spør dataen</span>
-              </Button>
+              {SHOW_CHAT && (
+                <Button variant="ghost" size="sm" onClick={() => setChat(true)} className="gap-1.5">
+                  <MessageSquare /><span className="hidden sm:inline">Spør dataen</span>
+                </Button>
+              )}
               <div className="bg-border mx-1 h-5 w-px" />
               <Button variant="ghost" size="icon-sm" onClick={toggle} aria-label="Bytt tema">{dark ? <Sun /> : <Moon />}</Button>
             </div>
@@ -86,7 +91,7 @@ export default function App() {
         </main>
       </Tabs>
       <InsightPanel open={insight} onClose={() => setInsight(false)} />
-      <ChatPanel open={chat} onOpenChange={setChat} />
+      {SHOW_CHAT && <ChatPanel open={chat} onOpenChange={setChat} />}
       <ActivitySheet />
     </StoreProvider>
   )

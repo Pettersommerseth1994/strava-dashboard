@@ -268,7 +268,7 @@ export function Form() {
             <ComposedChart data={weekly}>
               <CartesianGrid vertical={false} />
               <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={30} />
-              <YAxis tickLine={false} axisLine={false} width={36} />
+              <YAxis tickLine={false} axisLine={false} width={56} tickFormatter={(v: number) => `${v} km`} />
               <ChartTooltip content={<ChartTooltipContent />} />
               <Bar dataKey="km" fill="var(--color-km)" radius={2} />
               <Line dataKey="avg" stroke="var(--color-avg)" strokeWidth={2.5} dot={false} />

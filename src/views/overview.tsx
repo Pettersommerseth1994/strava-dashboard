@@ -12,12 +12,12 @@ import {
 } from '@/lib/data'
 
 type Metric = 'dist' | 'time' | 'up' | 'count' | 'load'
-const M: Record<Metric, { label: string; val: (a: Activity) => number; fmt: (v: number) => string }> = {
-  dist: { label: 'Distanse', val: (a) => a.dist / 1000, fmt: (v) => fmtNum(v, 1) + ' km' },
-  time: { label: 'Tid', val: (a) => a.mov / 3600, fmt: (v) => fmtNum(v, 1) + ' t' },
-  up: { label: 'Høydemeter', val: (a) => a.up, fmt: (v) => fmtInt(v) + ' m' },
-  load: { label: 'Belastning', val: (a) => a.load, fmt: (v) => fmtInt(v) },
-  count: { label: 'Økter', val: () => 1, fmt: (v) => fmtInt(v) },
+const M: Record<Metric, { label: string; unit: string; val: (a: Activity) => number; fmt: (v: number) => string }> = {
+  dist: { label: 'Distanse', unit: 'km', val: (a) => a.dist / 1000, fmt: (v) => fmtNum(v, 1) + ' km' },
+  time: { label: 'Tid', unit: 't', val: (a) => a.mov / 3600, fmt: (v) => fmtNum(v, 1) + ' t' },
+  up: { label: 'Høydemeter', unit: 'm', val: (a) => a.up, fmt: (v) => fmtInt(v) + ' m' },
+  load: { label: 'Belastning', unit: 'TRIMP', val: (a) => a.load, fmt: (v) => fmtInt(v) },
+  count: { label: 'Økter', unit: 'økter', val: () => 1, fmt: (v) => fmtInt(v) },
 }
 
 type DayInfo = { h: number; n: number; km: number; up: number; sports: string[]; ids: string[] }
@@ -193,6 +193,7 @@ export function Overview() {
             <ToggleGroup value={[gran]} onValueChange={(v) => v[0] && setGran(v[0] as Gran | 'auto')} variant="outline" size="sm">
               {([['auto', 'Auto'], ['day', 'Dag'], ['week', 'Uke'], ['month', 'Mnd'], ['year', 'År']] as const).map(([k, l]) => <ToggleGroupItem key={k} value={k}>{l}</ToggleGroupItem>)}
             </ToggleGroup>
+            <div className="bg-foreground/20 mx-1.5 hidden h-5 w-px sm:block" aria-hidden />
             <ToggleGroup value={[metric]} onValueChange={(v) => v[0] && setMetric(v[0] as Metric)} variant="outline" size="sm">
               {(Object.keys(M) as Metric[]).map((k) => <ToggleGroupItem key={k} value={k}>{M[k].label}</ToggleGroupItem>)}
             </ToggleGroup>
@@ -203,7 +204,7 @@ export function Overview() {
           <BarChart data={buckets} onClick={onBar} className={g !== 'day' ? 'cursor-pointer' : ''}>
             <CartesianGrid vertical={false} />
             <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={20} />
-            <YAxis tickLine={false} axisLine={false} width={44} />
+            <YAxis tickLine={false} axisLine={false} width={metric === 'load' ? 88 : 72} tickFormatter={(v: number) => `${fmtInt(v)} ${m.unit}`} />
             <ChartTooltip content={<ChartTooltipContent />} />
             {present.map((k) => <Bar key={k} dataKey={k} stackId="a" fill={`var(--color-${k})`} />)}
           </BarChart>
