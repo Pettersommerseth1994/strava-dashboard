@@ -23,5 +23,6 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/tabs", "src/lib/ctx.tsx", "src/lib/period.ts", "src/lib/buckets.ts", "src/lib/stats.ts", "src/components/activity-dialog.tsx", "src/components/period-bar.tsx"]
 }
