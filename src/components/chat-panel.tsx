@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import Anthropic from '@anthropic-ai/sdk'
-import { ArrowUp, KeyRound, Loader2, MessageSquare, RotateCcw, Settings2, Wrench } from 'lucide-react'
+import { ArrowUp, Check, ClipboardPaste, ExternalLink, Loader2, LogOut, MessageSquare, RotateCcw, Settings2, Wrench } from 'lucide-react'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -84,6 +84,28 @@ export function ChatPanel({ open, onOpenChange }: { open: boolean; onOpenChange:
   useEffect(() => { scroller.current?.scrollTo({ top: scroller.current.scrollHeight }) }, [ui])
 
   const saveKey = (k: string, r = remember) => { setKey(k); store.set('anthropic-key', k.trim(), r) }
+  const [draft, setDraft] = useState('')
+  const [checking, setChecking] = useState(false)
+  const [keyErr, setKeyErr] = useState('')
+  async function connect() {
+    const k = draft.trim()
+    if (!k) return
+    if (!k.startsWith('sk-ant-')) { setKeyErr('Det ser ikke ut som en API-nøkkel. Den starter med «sk-ant-».'); return }
+    setChecking(true); setKeyErr('')
+    try {
+      // Gratis kall som bare sjekker at nøkkelen virker
+      await new Anthropic({ apiKey: k, dangerouslyAllowBrowser: true }).models.list({ limit: 1 })
+      saveKey(k); setDraft(''); setShowSettings(false)
+    } catch (e) {
+      setKeyErr(e instanceof Anthropic.AuthenticationError ? 'Nøkkelen ble avvist. Sjekk at du kopierte hele nøkkelen.'
+        : e instanceof Anthropic.APIConnectionError ? 'Fikk ikke kontakt med Anthropic. Sjekk nettforbindelsen.'
+        : `Kunne ikke bekrefte nøkkelen: ${(e as Error).message}`)
+    } finally { setChecking(false) }
+  }
+  async function paste() {
+    try { const t = (await navigator.clipboard.readText()).trim(); if (t) { setDraft(t); setKeyErr('') } } catch { setKeyErr('Fikk ikke lese utklippstavlen. Lim inn med ⌘V i feltet.') }
+  }
+  const disconnect = () => { saveKey(''); setShowSettings(false) }
   const patchLast = (f: (m: UiMsg) => UiMsg) => setUi((u) => [...u.slice(0, -1), f(u[u.length - 1])])
 
   async function ask(q: string) {
@@ -151,33 +173,64 @@ export function ChatPanel({ open, onOpenChange }: { open: boolean; onOpenChange:
             <SheetTitle className="text-base">Spør dataen</SheetTitle>
             <div className="ml-auto flex gap-1">
               <Button variant="ghost" size="icon-sm" onClick={reset} disabled={!ui.length || busy} aria-label="Ny samtale" title="Ny samtale"><RotateCcw /></Button>
-              <Button variant={showSettings ? 'secondary' : 'ghost'} size="icon-sm" onClick={() => setShowSettings(!showSettings)} aria-label="Innstillinger" title="Innstillinger"><Settings2 /></Button>
+              <Button variant={showSettings ? 'secondary' : 'ghost'} size="icon-sm" disabled={!key} onClick={() => setShowSettings(!showSettings)} aria-label="Innstillinger" title="Innstillinger"><Settings2 /></Button>
             </div>
           </div>
           <SheetDescription className="text-xs">Still spørsmål om treningen din. Claude henter tallene fra dataene i dashboardet.</SheetDescription>
         </SheetHeader>
 
-        {showSettings && (
+        {key && showSettings && (
           <div className="bg-muted/40 space-y-3 border-b px-4 py-3 text-sm">
-            <label className="block space-y-1">
-              <span className="flex items-center gap-1.5 text-xs font-medium"><KeyRound className="size-3.5" />Anthropic API-nøkkel</span>
-              <Input type="password" autoComplete="off" placeholder="sk-ant-…" value={key} onChange={(e) => saveKey(e.target.value)} />
-            </label>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="flex items-center gap-1.5 font-medium"><Check className="size-3.5 text-[var(--brand)]" />Koblet til Claude</span>
+              <span className="text-muted-foreground font-mono">…{key.trim().slice(-4)}</span>
+              <Button size="xs" variant="ghost" className="ml-auto" onClick={disconnect}><LogOut />Koble fra</Button>
+            </div>
             <div className="flex flex-wrap items-center gap-3">
-              <label className="flex items-center gap-2 text-xs"><Switch checked={remember} onCheckedChange={(r) => { setRemember(r); saveKey(key, r) }} />Husk på denne enheten</label>
+              <label className="flex items-center gap-2 text-xs"><Switch checked={remember} onCheckedChange={(r) => { setRemember(r); saveKey(key, r) }} />Husk meg på denne enheten</label>
               <Select value={model} onValueChange={(v) => { if (v) { setModel(v); store.set('chat-model', v, true) } }} items={MODELS.map((m) => ({ value: m.id, label: m.label }))}>
                 <SelectTrigger size="sm" className="ml-auto w-52"><SelectValue /></SelectTrigger>
                 <SelectContent>{MODELS.map((m) => <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <p className="text-muted-foreground text-[11px] leading-relaxed">
-              Nøkkelen lagres bare i denne nettleseren og sendes kun til api.anthropic.com. Spørsmålene og utdrag av treningsdataene sendes til Anthropic for å lage svaret, og bruken belastes kontoen din.
-              Lag en nøkkel på <a className="underline" href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">console.anthropic.com</a>. Ikke lagre nøkkelen på delte maskiner.
-            </p>
-            {key && <Button size="sm" variant="outline" onClick={() => setShowSettings(false)}>Ferdig</Button>}
           </div>
         )}
 
+        {!key ? (
+          <div className="flex-1 overflow-y-auto px-5 py-6 text-sm">
+            <h3 className="text-base font-semibold">Koble til Claude</h3>
+            <p className="text-muted-foreground mt-1.5 leading-relaxed">
+              Chatten bruker Claude via Anthropic. Du trenger en <b className="text-foreground font-medium">API-nøkkel</b> – en kode du lager selv på under ett minutt.
+              Et vanlig Claude-abonnement (Pro/Max) kan dessverre ikke brukes her; API-et betales separat etter bruk, typisk noen få kroner per spørsmål.
+            </p>
+            <ol className="mt-6 space-y-6">
+              <li className="flex gap-3">
+                <span className="bg-foreground text-background grid size-6 shrink-0 place-items-center rounded-full text-xs font-semibold">1</span>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <p className="font-medium">Lag en nøkkel</p>
+                  <p className="text-muted-foreground text-xs leading-relaxed">Logg inn (eller opprett konto), trykk <b>Create Key</b> og kopier nøkkelen.</p>
+                  <Button size="sm" variant="outline" nativeButton={false} render={<a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer" />}>Åpne Anthropic Console<ExternalLink /></Button>
+                </div>
+              </li>
+              <li className="flex gap-3">
+                <span className="bg-foreground text-background grid size-6 shrink-0 place-items-center rounded-full text-xs font-semibold">2</span>
+                <form className="min-w-0 flex-1 space-y-2" onSubmit={(e) => { e.preventDefault(); connect() }}>
+                  <p className="font-medium">Lim inn nøkkelen</p>
+                  <div className="flex gap-2">
+                    <Input type="password" autoComplete="off" placeholder="sk-ant-…" value={draft} onChange={(e) => { setDraft(e.target.value); setKeyErr('') }} aria-invalid={!!keyErr} />
+                    <Button type="button" size="sm" variant="outline" className="h-9" onClick={paste}><ClipboardPaste />Lim inn</Button>
+                  </div>
+                  {keyErr && <p className="text-destructive text-xs">{keyErr}</p>}
+                  <label className="flex items-center gap-2 pt-1 text-xs"><Switch checked={remember} onCheckedChange={setRemember} />Husk meg på denne enheten</label>
+                  <Button type="submit" className="mt-2 w-full" disabled={!draft.trim() || checking}>{checking ? <><Loader2 className="animate-spin" />Sjekker nøkkelen …</> : 'Koble til'}</Button>
+                </form>
+              </li>
+            </ol>
+            <p className="text-muted-foreground mt-8 border-t pt-4 text-[11px] leading-relaxed">
+              Nøkkelen lagres bare i denne nettleseren og sendes kun til Anthropic. Spørsmålene dine og utdrag av treningsdataene sendes dit for å lage svaret. Ikke huske nøkkelen på delte maskiner.
+            </p>
+          </div>
+        ) : (
         <div ref={scroller} className="flex-1 space-y-4 overflow-y-auto px-4 py-4 text-sm">
           {ui.length === 0 && (
             <div className="space-y-2">
@@ -202,9 +255,11 @@ export function ChatPanel({ open, onOpenChange }: { open: boolean; onOpenChange:
           ))}
         </div>
 
+        )}
+
         <form className="flex items-end gap-2 border-t p-3" onSubmit={(e) => { e.preventDefault(); ask(input) }}>
           <textarea
-            value={input} onChange={(e) => setInput(e.target.value)} rows={1} placeholder={key ? 'Spør om treningen din …' : 'Legg inn API-nøkkel først'}
+            value={input} onChange={(e) => setInput(e.target.value)} rows={1} placeholder={key ? 'Spør om treningen din …' : 'Koble til Claude først'} disabled={!key}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(input) } }}
             className="border-input bg-background focus-visible:ring-ring/50 max-h-32 min-h-9 flex-1 resize-none rounded-lg border px-3 py-2 text-sm outline-none focus-visible:ring-2"
           />

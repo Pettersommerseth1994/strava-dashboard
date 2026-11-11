@@ -6,6 +6,7 @@ import { ActivitySheet } from '@/components/activity-sheet'
 import { ChatPanel } from '@/components/chat-panel'
 import { InsightPanel } from '@/components/insight-panel'
 import { PeriodBar } from '@/components/filters'
+import { Brand } from '@/components/brand'
 import { StoreProvider } from '@/lib/store'
 import { type Activity, fmtDate, fmtInt } from '@/lib/data'
 import { Overview } from '@/views/overview'
@@ -29,14 +30,6 @@ const TABS = [
   ['oversikt', 'Oversikt'], ['rekorder', 'Rekorder'], ['progresjon', 'Progresjon'], ['form', 'Form'], ['utforsker', 'Utforsker'], ['okter', 'Økter'],
 ] as const
 
-function Logo() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M3 17l5-9 4 6 3-4 6 7" />
-    </svg>
-  )
-}
-
 export default function App() {
   const [dark, toggle] = useTheme()
   const [all, setAll] = useState<Activity[] | null>(null)
@@ -54,17 +47,14 @@ export default function App() {
 
   if (!all) return <div className="bg-background text-muted-foreground grid min-h-screen place-items-center text-sm">Laster …</div>
 
+  const meta = { name: 'Magnus Kvitvær Sommerseth', since: fmtDate(all[0].d), count: `${fmtInt(all.length)} økter` }
+
   return (
     <StoreProvider all={all}>
       <Tabs value={tab} onValueChange={(v) => v && setTab(v as string)} className="bg-background min-h-screen gap-0">
         <header className="bg-background/80 supports-[backdrop-filter]:bg-background/70 sticky top-0 z-20 border-b backdrop-blur-xl">
           <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4">
-            <div className="bg-foreground text-background grid size-7 place-items-center rounded-md"><Logo /></div>
-            <div className="flex min-w-0 items-baseline gap-2">
-              <h1 className="truncate text-[15px] font-semibold tracking-tight">Magnus</h1>
-              <span className="text-muted-foreground hidden truncate text-[15px] sm:inline">Treningsdashboard</span>
-            </div>
-            <span className="text-muted-foreground hidden text-xs tabular-nums lg:inline">· {fmtDate(all[0].d)} – {fmtDate(all[all.length - 1].d)} · {fmtInt(all.length)} økter</span>
+            <Brand m={meta} />
             <div className="ml-auto flex items-center gap-1">
               <Button variant={insight ? 'secondary' : 'ghost'} size="sm" onClick={() => setInsight(!insight)} className="gap-1.5" aria-pressed={insight}>
                 <Sparkles className="text-[var(--brand)]" /><span className="hidden sm:inline">Innsikt</span>
@@ -76,8 +66,8 @@ export default function App() {
               <Button variant="ghost" size="icon-sm" onClick={toggle} aria-label="Bytt tema">{dark ? <Sun /> : <Moon />}</Button>
             </div>
           </div>
-          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 pb-2">
-            <div className="-mb-2 max-w-full overflow-x-auto">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-3 px-4 pb-2.5">
+            <div className="max-w-full overflow-x-auto overflow-y-hidden">
               <TabsList variant="line" className="h-9">
                 {TABS.map(([k, l]) => <TabsTrigger key={k} value={k} className="px-2.5">{l}</TabsTrigger>)}
               </TabsList>

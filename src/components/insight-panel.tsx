@@ -38,7 +38,6 @@ export function InsightPanel({ open, onClose }: { open: boolean; onClose: () => 
       <div className="flex items-center justify-between border-b px-4 py-2.5">
         <p className="flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase"><Sparkles className="size-3.5 text-[var(--brand)]" />Innsikt</p>
         <div className="flex items-center gap-1">
-          <span className="text-muted-foreground text-[11px] tabular-nums">{(i % deck.length) + 1}/{deck.length}</span>
           <Button variant="ghost" size="icon-xs" onClick={onClose} aria-label="Lukk innsikt"><X /></Button>
         </div>
       </div>
