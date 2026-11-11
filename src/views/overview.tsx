@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis } from 'recharts'
 import { Activity as ActivityIcon, CalendarDays, Flame, Gauge, Mountain, Route, Timer } from 'lucide-react'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
@@ -8,7 +8,7 @@ import { ActivityRow, ChartCard, Delta, Kpi } from '@/components/common'
 import { useStore } from '@/lib/store'
 import {
   type Activity, type Gran, MAIN_SPORTS, SPORT_COLORS, WEEKDAYS, addDays, allBuckets, autoGran, bucketKey, bucketLabel, bucketRange,
-  dayKey, fmtDate, fmtDur, fmtHours, fmtInt, fmtKm, fmtNum, longestStreak, sportOf, sumBy, todayStr,
+  MONTHS, daysBetween, parseYmd, dayKey, fmtDate, fmtDur, fmtHours, fmtInt, fmtKm, fmtNum, longestStreak, sportOf, sumBy, todayStr,
 } from '@/lib/data'
 
 type Metric = 'dist' | 'time' | 'up' | 'count' | 'load'
@@ -20,23 +20,112 @@ const M: Record<Metric, { label: string; val: (a: Activity) => number; fmt: (v: 
   count: { label: 'Økter', val: () => 1, fmt: (v) => fmtInt(v) },
 }
 
+type DayInfo = { h: number; n: number; km: number; up: number; sports: string[]; ids: string[] }
+const LEVELS = [0, 0.25, 0.45, 0.7, 1]
+const lvl = (v: number) => (v === 0 ? 0 : v < 1 ? 1 : v < 2 ? 2 : v < 3.5 ? 3 : 4)
+const DAYS_LONG = ['mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag', 'søndag']
+
+function HeatStat({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">{label}</p>
+      <p className="text-lg leading-tight font-semibold tabular-nums">{value}</p>
+      {sub && <p className="text-muted-foreground truncate text-[11px]">{sub}</p>}
+    </div>
+  )
+}
+
 function Heatmap({ acts, to, onDay }: { acts: Activity[]; to: string; onDay: (d: string) => void }) {
-  const byDay = useMemo(() => {
-    const m = new Map<string, number>()
-    for (const a of acts) m.set(dayKey(a.d), (m.get(dayKey(a.d)) ?? 0) + a.mov / 3600)
-    return m
-  }, [acts])
+  const [hover, setHover] = useState<string | null>(null)
+  const today = todayStr()
   const end = addDays(to, 6 - ((new Date(to + 'T00:00:00Z').getUTCDay() + 6) % 7))
   const start = addDays(end, -53 * 7 + 1)
-  const cells = Array.from({ length: 53 * 7 }, (_, i) => { const k = addDays(start, i); return { k, v: byDay.get(k) ?? 0, future: k > to } })
-  const lvl = (v: number) => (v === 0 ? 0 : v < 1 ? 1 : v < 2 ? 2 : v < 3.5 ? 3 : 4)
-  const op = [0, 0.25, 0.45, 0.7, 1]
+  const byDay = useMemo(() => {
+    const m = new Map<string, DayInfo>()
+    for (const a of acts) {
+      const k = dayKey(a.d)
+      if (k < start || k > to) continue
+      const o = m.get(k) ?? { h: 0, n: 0, km: 0, up: 0, sports: [], ids: [] }
+      o.h += a.mov / 3600; o.n++; o.km += a.dist / 1000; o.up += a.up; o.ids.push(a.id)
+      if (!o.sports.includes(a.t)) o.sports.push(a.t)
+      m.set(k, o)
+    }
+    return m
+  }, [acts, start, to])
+  const cells = Array.from({ length: 53 * 7 }, (_, i) => { const k = addDays(start, i); return { k, d: byDay.get(k), future: k > to } })
+  const months = Array.from({ length: 53 }, (_, w) => {
+    const k = addDays(start, w * 7)
+    const prev = w ? addDays(start, (w - 1) * 7) : ''
+    return !prev || k.slice(5, 7) !== prev.slice(5, 7) ? MONTHS[+k.slice(5, 7) - 1] : ''
+  })
+
+  const stats = useMemo(() => {
+    const vals = [...byDay.entries()]
+    const days = daysBetween(start, to) + 1
+    const h = vals.reduce((x, [, v]) => x + v.h, 0)
+    const best = vals.sort((a, b) => b[1].h - a[1].h)[0]
+    const st = longestStreak([...byDay.keys()])
+    const wd = [0, 0, 0, 0, 0, 0, 0]; for (const [k, v] of byDay) wd[(parseYmd(k).getUTCDay() + 6) % 7] += v.h
+    let cur = 0; for (let d = to; byDay.has(d); d = addDays(d, -1)) cur++
+    return { active: byDay.size, days, h, best, st, wd: wd.indexOf(Math.max(...wd)), cur }
+  }, [byDay, start, to])
+
+  const hv = hover ? byDay.get(hover) : undefined
   return (
-    <div className="overflow-x-auto pb-1">
-      <div className="grid w-max grid-flow-col grid-rows-7 gap-[3px]">
-        {cells.map((c) => c.future ? <div key={c.k} className="size-3" /> : (
-          <button key={c.k} onClick={() => c.v > 0 && onDay(c.k)} title={`${fmtDate(c.k)} · ${c.v ? fmtNum(c.v, 1) + ' t' : 'hvile'}`} style={lvl(c.v) ? { background: `color-mix(in oklch, var(--brand) ${op[lvl(c.v)] * 100}%, transparent)` } : undefined} className={`size-3 rounded-[3px] ${lvl(c.v) ? '' : 'bg-muted'} ${c.v ? 'hover:ring-foreground cursor-pointer hover:ring-1' : 'cursor-default'}`} />
-        ))}
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-6">
+        <HeatStat label="Aktive dager" value={`${stats.active}`} sub={`${Math.round((stats.active / stats.days) * 100)} % av ${stats.days} dager`} />
+        <HeatStat label="Treningstid" value={fmtHours(stats.h * 3600)} sub={`${fmtNum(stats.h / (stats.days / 7), 1)} t per uke i snitt`} />
+        <HeatStat label="Lengste serie" value={`${stats.st.best} dager`} sub={stats.st.best ? `${fmtDate(stats.st.bestStart)} – ${fmtDate(stats.st.bestEnd)}` : ''} />
+        <HeatStat label="Nåværende serie" value={`${stats.cur} ${stats.cur === 1 ? 'dag' : 'dager'}`} sub={stats.cur ? `til og med ${fmtDate(to)}` : 'hviledag sist'} />
+        <HeatStat label="Travleste dag" value={stats.best ? fmtDur(stats.best[1].h * 3600) : '–'} sub={stats.best ? fmtDate(stats.best[0]) : ''} />
+        <HeatStat label="Mest aktive ukedag" value={DAYS_LONG[stats.wd][0].toUpperCase() + DAYS_LONG[stats.wd].slice(1)} sub="etter treningstid" />
+      </div>
+
+      <div className="overflow-x-auto pb-1">
+        <div className="grid min-w-[760px] gap-[3px]" style={{ gridTemplateColumns: '1.75rem repeat(53, minmax(0, 1fr))' }} onMouseLeave={() => setHover(null)}>
+          <div />
+          {months.map((m, w) => <div key={w} className="text-muted-foreground h-4 overflow-visible text-[10px] leading-4 whitespace-nowrap">{m}</div>)}
+          {Array.from({ length: 7 }, (_, r) => (
+            <Fragment key={r}>
+              <div className="text-muted-foreground flex items-center text-[10px]">{r % 2 === 0 ? WEEKDAYS[r] : ''}</div>
+              {Array.from({ length: 53 }, (_, w) => {
+                const c = cells[w * 7 + r]
+                if (c.future) return <div key={w} className="aspect-square" />
+                const l = lvl(c.d?.h ?? 0)
+                return (
+                  <button
+                    key={w}
+                    onMouseEnter={() => setHover(c.k)}
+                    onFocus={() => setHover(c.k)}
+                    onClick={() => c.d && onDay(c.k)}
+                    aria-label={`${fmtDate(c.k)}: ${c.d ? `${c.d.n} økter, ${fmtDur(c.d.h * 3600)}` : 'hvile'}`}
+                    style={l ? { background: `color-mix(in oklch, var(--brand) ${LEVELS[l] * 100}%, transparent)` } : undefined}
+                    className={`aspect-square rounded-[3px] transition-transform ${l ? '' : 'bg-muted'} ${c.d ? 'cursor-pointer hover:scale-125' : 'cursor-default'} ${hover === c.k ? 'ring-foreground ring-1' : ''} ${c.k === today ? 'ring-foreground/60 ring-1 ring-offset-1 ring-offset-[var(--card)]' : ''}`}
+                  />
+                )
+              })}
+            </Fragment>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3 text-xs">
+        <div className="min-h-5 min-w-0 flex-1">
+          {hover ? (
+            <p className="truncate">
+              <span className="font-medium capitalize">{DAYS_LONG[(parseYmd(hover).getUTCDay() + 6) % 7]} {fmtDate(hover)}</span>
+              {hv ? (
+                <span className="text-muted-foreground"> · {hv.n} {hv.n === 1 ? 'økt' : 'økter'} · {fmtDur(hv.h * 3600)}{hv.km > 0.5 ? ` · ${fmtNum(hv.km, 1)} km` : ''}{hv.up > 50 ? ` · ${fmtInt(hv.up)} hm` : ''} · {hv.sports.join(', ')}</span>
+              ) : <span className="text-muted-foreground"> · hviledag</span>}
+            </p>
+          ) : <p className="text-muted-foreground">Hold musepekeren over en dag for detaljer. Trykk for å åpne økten eller dagen.</p>}
+        </div>
+        <div className="text-muted-foreground flex items-center gap-1.5">
+          <span>Mindre</span>
+          {LEVELS.map((o, i) => <i key={i} className={`size-3 rounded-[3px] ${i ? '' : 'bg-muted'}`} style={i ? { background: `color-mix(in oklch, var(--brand) ${o * 100}%, transparent)` } : undefined} title={['Hvile', '< 1 t', '1–2 t', '2–3,5 t', '> 3,5 t'][i]} />)}
+          <span>Mer</span>
+        </div>
       </div>
     </div>
   )
@@ -149,7 +238,7 @@ export function Overview() {
         </ChartCard>
       </div>
 
-      <ChartCard title="Aktivitetskalender" desc="Treningstid per dag, 53 uker bakover fra periodens slutt · trykk på en dag">
+      <ChartCard title="Aktivitetskalender" desc={`Treningstid per dag, siste 53 uker til ${fmtDate(range.to > today ? today : range.to)}${sports.length ? ` · ${sports.join(", ")}` : ""}`}>
         <Heatmap acts={sportActs} to={range.to > today ? today : range.to} onDay={(d) => { const day = sportActs.filter((a) => dayKey(a.d) === d); if (day.length === 1) open(day[0].id); else goRange(d, d) }} />
       </ChartCard>
 
