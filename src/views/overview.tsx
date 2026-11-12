@@ -6,6 +6,8 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ActivityRow, ChartCard, Delta, Kpi } from '@/components/common'
+import { Race } from '@/components/race'
+import { YEAR } from '@/lib/year'
 import { useStore } from '@/lib/store'
 import {
   type Activity, type Gran, MAIN_SPORTS, SPORT_COLORS, WEEKDAYS, addDays, allBuckets, autoGran, bucketKey, bucketLabel, bucketRange,
@@ -219,6 +221,10 @@ export function Overview() {
             {present.map((k) => <Bar key={k} dataKey={k} stackId="a" fill={`var(--color-${k})`} />)}
           </BarChart>
         </ChartContainer>
+      </ChartCard>
+
+      <ChartCard title="Kappløp mot i fjor" desc={`Samlet treningsmengde gjennom året, ${YEAR} mot ${YEAR - 1} og ${YEAR - 2} på samme dato${sports.length ? ` · ${sports.join(', ')}` : ''}`}>
+        <Race />
       </ChartCard>
 
       <div className="grid gap-6 lg:grid-cols-3">

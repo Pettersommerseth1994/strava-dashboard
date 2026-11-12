@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { ChartCard, SportDot, hitDot } from '@/components/common'
+import { Badges } from '@/components/badges'
 import { useStore } from '@/lib/store'
 import {
   type Activity, BE_DIST, BE_LABELS, METRICS, METRIC, bucketKey, bucketRange, dayKey, fmtClock, fmtDate, fmtDur, fmtHours, fmtInt, fmtKm, fmtMonth, fmtNum,
@@ -173,6 +174,9 @@ export function Records() {
             ))}
           </TableBody>
         </Table>
+      </ChartCard>
+      <ChartCard title="Merker" desc="Prestasjoner som låses opp automatisk fra treningsdataene · trykk på et merke for detaljer">
+        <Badges />
       </ChartCard>
     </div>
   )

@@ -3,7 +3,7 @@ import { Award, Clock, Flame, Medal, Moon, Mountain, MountainSnow, Route, Shapes
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useStore } from '@/lib/store'
-import { TODAY } from './shared'
+import { TODAY } from '@/lib/year'
 import { type Activity, dayKey, daysBetween, fmtClock, fmtDate, fmtInt, fmtNum, isoWeek } from '@/lib/data'
 
 type Result = { done: boolean; date?: string; actId?: string; progress: number; now: string }

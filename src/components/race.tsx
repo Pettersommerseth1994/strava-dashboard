@@ -4,7 +4,7 @@ import { ChartContainer, ChartTooltip, type ChartConfig } from '@/components/ui/
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { useStore } from '@/lib/store'
 import { type Activity, MONTHS, fmtDate, fmtInt, fmtNum } from '@/lib/data'
-import { TODAY, YEAR, doy, inYear } from './shared'
+import { TODAY, YEAR, doy, inYear } from '@/lib/year'
 
 type M = 'km' | 't' | 'n'
 const VAL: Record<M, (a: Activity) => number> = { km: (a) => a.dist / 1000, t: (a) => a.mov / 3600, n: () => 1 }
@@ -19,7 +19,7 @@ function cumulative(acts: Activity[], f: (a: Activity) => number) {
 }
 
 export function Race() {
-  const { all } = useStore()
+  const { sportActs: all } = useStore()
   const [m, setM] = useState<M>('km')
   const today = doy(TODAY)
   const { data, cur, prev, passed } = useMemo(() => {
