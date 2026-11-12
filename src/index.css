@@ -189,3 +189,7 @@
     min-width: 2.25rem; min-height: 2.25rem;
   }
 }
+
+/* Kart: OSM-flisene finnes bare lyse – mørk modus lages ved å invertere dem */
+.dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) saturate(0.4); }
+.leaflet-container { background: var(--muted); font-family: inherit; }

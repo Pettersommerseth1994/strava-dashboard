@@ -24,3 +24,17 @@ Eksportmappen er utpakket Strava-eksport (med `activities.csv` og `activities/`)
 npm install
 npm run dev
 ```
+
+## Minner (bilder, videoer og rutekart)
+
+Fanen **Minner** viser tilbakeblikk («på denne dagen»), en minnekarusell, rutekart og en bildevegg.
+Dataene lages fra Strava-eksporten i to steg (krever macOS for `sips`, `avconvert` og `qlmanage`):
+
+```bash
+python3 -I scripts/build-local.py <eksportmappe> local-data
+python3 -I scripts/build-memories.py local-data public/minner
+```
+
+- `local-data/` er mellomlager med originalfiler og ligger i `.gitignore`.
+- `public/minner/` publiseres: bilder på maks 1600 px, videoer innenfor 640 × 480 og plakatbilder.
+- Kartsporene trimmes med personvernsone før publisering: de første og siste 400 m av hver rute fjernes.

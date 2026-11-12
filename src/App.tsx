@@ -6,6 +6,7 @@ import { ActivitySheet } from '@/components/activity-sheet'
 import { ChatPanel } from '@/components/chat-panel'
 import { InsightPanel } from '@/components/insight-panel'
 import { PeriodBar } from '@/components/filters'
+import { MemoriesTabLabel } from '@/components/memories-badge'
 import { Brand } from '@/components/brand'
 import { StoreProvider } from '@/lib/store'
 import { type Activity, fmtDate, fmtInt, sanitize } from '@/lib/data'
@@ -29,12 +30,17 @@ function useTheme() {
 /** Chatten er skjult inntil videre – sett til true for å vise «Spør dataen» igjen */
 const SHOW_CHAT = false
 
+/** Minner lastes først når fanen åpnes (kartbiblioteket er stort) */
+const Memories = lazy(() => import('@/views/memories').then((m) => ({ default: m.Memories })))
+
 /** Forslag til nye funksjoner – vises bare lokalt (npm run dev), aldri på nettsiden */
 const Lab = import.meta.env.DEV ? lazy(() => import('@/views/lab').then((m) => ({ default: m.Lab }))) : null
+const Concepts = import.meta.env.DEV ? lazy(() => import('@/views/concepts').then((m) => ({ default: m.Concepts }))) : null
 
 const TABS: [string, string][] = [
-  ['oversikt', 'Oversikt'], ['rekorder', 'Rekorder'], ['progresjon', 'Progresjon'], ['form', 'Form'], ['utforsker', 'Utforsker'], ['okter', 'Økter'],
+  ['oversikt', 'Oversikt'], ['rekorder', 'Rekorder'], ['progresjon', 'Progresjon'], ['form', 'Form'], ['utforsker', 'Utforsker'], ['okter', 'Økter'], ['minner', 'Minner'],
   ...(Lab ? [['forslag', 'Forslag ✦'] as [string, string]] : []),
+  ...(Concepts ? [['konsepter', 'Konsepter ✦'] as [string, string]] : []),
 ]
 
 export default function App() {
@@ -78,7 +84,7 @@ export default function App() {
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-3 px-4 pb-2.5">
             <div className="no-scrollbar max-w-full overflow-x-auto overflow-y-hidden max-sm:[mask-image:linear-gradient(to_right,black_80%,transparent)]">
               <TabsList variant="line" className="h-9">
-                {TABS.map(([k, l]) => <TabsTrigger key={k} value={k} className="px-2.5">{l}</TabsTrigger>)}
+                {TABS.map(([k, l]) => <TabsTrigger key={k} value={k} className="px-2.5">{k === 'minner' ? <MemoriesTabLabel active={tab === 'minner'} /> : l}</TabsTrigger>)}
               </TabsList>
             </div>
             <PeriodBar />
@@ -91,6 +97,8 @@ export default function App() {
           <TabsContent value="form"><Form /></TabsContent>
           <TabsContent value="utforsker"><Explorer /></TabsContent>
           <TabsContent value="okter"><Sessions /></TabsContent>
+          <TabsContent value="minner"><Suspense fallback={<p className="text-muted-foreground py-16 text-center text-sm">Laster minner …</p>}><Memories /></Suspense></TabsContent>
+          {Concepts && <TabsContent value="konsepter"><Suspense fallback={<p className="text-muted-foreground py-16 text-center text-sm">Laster konsepter …</p>}><Concepts /></Suspense></TabsContent>}
           {Lab && <TabsContent value="forslag"><Suspense fallback={<p className="text-muted-foreground py-16 text-center text-sm">Laster forslag …</p>}><Lab /></Suspense></TabsContent>}
           <footer className="text-muted-foreground py-8 text-center text-xs">Utviklet av Petter Sommerseth med Claude AI</footer>
         </main>
