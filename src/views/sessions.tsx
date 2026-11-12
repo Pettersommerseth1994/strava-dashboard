@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { ChartContainer, ChartTooltip, type ChartConfig } from '@/components/ui/chart'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { ChartCard, SportDot } from '@/components/common'
+import { ChartCard, SportDot, hitDot } from '@/components/common'
 import { useStore } from '@/lib/store'
 import { type Activity, MAIN_SPORTS, METRICS, METRIC, SPORT_COLORS, fmtClock, fmtDate, fmtDur, fmtInt, fmtKm, fmtMonth, fmtSpeed, sportOf, toCsv, ts } from '@/lib/data'
 
@@ -123,7 +123,7 @@ export function Explorer() {
                 if (!p?.n) return null
                 return <div className="bg-background rounded-lg border px-2.5 py-1.5 text-xs shadow-xl"><p className="max-w-56 truncate font-medium">{p.n}</p><p className="text-muted-foreground">{fmtDate(p.d!)}</p><p>{AX.find((a) => a.key === xk)!.label.split(' (')[0]}: <b>{fmt(xk, p.x)}</b></p><p>{AX.find((a) => a.key === yk)!.label.split(' (')[0]}: <b>{fmt(yk, p.y)}</b></p></div>
               }} />
-              {series.map(([s, d]) => <Scatter key={s} data={d} fill={SPORT_COLORS[s]} fillOpacity={0.6} isAnimationActive={false} className="cursor-pointer" onClick={(p: unknown) => { const o = p as { id?: string; payload?: { id?: string } }; const id = o.id ?? o.payload?.id; if (id) open(id) }} />)}
+              {series.map(([s, d]) => <Scatter key={s} data={d} fill={SPORT_COLORS[s]} fillOpacity={0.6} isAnimationActive={false} shape={hitDot(open)} />)}
             </ComposedChart>
           </ChartContainer>
           <div className="mt-2 flex flex-wrap gap-3 text-xs">{series.map(([s, d]) => <span key={s} className="flex items-center gap-1.5"><i className="size-2.5 rounded-full" style={{ background: SPORT_COLORS[s] }} />{s} ({d.length})</span>)}</div>

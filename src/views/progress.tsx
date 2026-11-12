@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { ChartCard } from '@/components/common'
+import { ChartCard, hitDot } from '@/components/common'
 import { useStore } from '@/lib/store'
 import {
   type Activity, BE_DIST, BE_LABELS, METRICS, METRIC, ZONE_COLORS, addDays, allBuckets, bucketKey, bucketLabel, daysBetween, fmtClock, fmtDate, fmtMonth, fmtNum,
@@ -52,8 +52,7 @@ export function ProgressChart({ title, desc, pts, fmt, reversed, win = 10, color
             if (!p?.n) return null
             return <div className="bg-background rounded-lg border px-2.5 py-1.5 text-xs shadow-xl"><p className="max-w-56 truncate font-medium">{p.n}</p><p className="text-muted-foreground">{fmtDate(p.d)} · <span className="text-foreground font-semibold">{fmt(p.y)}{unit ? ' ' + unit : ''}</span></p><p className="text-muted-foreground mt-0.5">Trykk for detaljer</p></div>
           }} />
-          <Scatter data={pts} fill="var(--color-y)" fillOpacity={0.4} isAnimationActive={false} className="cursor-pointer"
-            onClick={(d: unknown) => { const o = d as { id?: string; payload?: { id?: string } }; const id = o.id ?? o.payload?.id; if (id) open(id) }} />
+          <Scatter data={pts} fill="var(--color-y)" fillOpacity={0.4} isAnimationActive={false} shape={hitDot(open)} />
           {!noTrend && <Line data={data.trend} dataKey="y" stroke="var(--color-y)" strokeWidth={2.5} dot={false} isAnimationActive={false} tooltipType="none" />}
           {best && <Line data={data.step} dataKey="y" type={best === 'step' ? 'stepAfter' : 'monotone'} stroke="var(--foreground)" strokeWidth={2} strokeDasharray={best === 'window90' ? '5 4' : undefined} dot={false} isAnimationActive={false} tooltipType="none" />}
         </ComposedChart>
@@ -108,9 +107,11 @@ export function Progress() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
-        <ToggleGroup value={[sport]} onValueChange={(v) => v[0] && setSport(v[0])} variant="outline" size="sm">
-          {SPORTS.map((s) => <ToggleGroupItem key={s} value={s}>{s}</ToggleGroupItem>)}
-        </ToggleGroup>
+        <div className="no-scrollbar -mx-4 max-w-[calc(100%+2rem)] overflow-x-auto px-4 sm:mx-0 sm:max-w-full sm:px-0">
+          <ToggleGroup value={[sport]} onValueChange={(v) => v[0] && setSport(v[0])} variant="outline" size="sm">
+            {SPORTS.map((s) => <ToggleGroupItem key={s} value={s}>{s}</ToggleGroupItem>)}
+          </ToggleGroup>
+        </div>
         <ToggleGroup value={[scope]} onValueChange={(v) => v[0] && setScope(v[0] as 'all' | 'period')} variant="outline" size="sm">
           <ToggleGroupItem value="all">Hele historikken</ToggleGroupItem>
           <ToggleGroupItem value="period">Valgt periode</ToggleGroupItem>
@@ -185,7 +186,7 @@ function ProgressChartInner({ pts, m, color, win }: { pts: Pt[]; m: (typeof METR
           if (!p?.n) return null
           return <div className="bg-background rounded-lg border px-2.5 py-1.5 text-xs shadow-xl"><p className="max-w-56 truncate font-medium">{p.n}</p><p className="text-muted-foreground">{fmtDate(p.d)} · <span className="text-foreground font-semibold">{m.fmt(p.y)} {m.unit}</span></p></div>
         }} />
-        <Scatter data={pts} fill="var(--color-y)" fillOpacity={0.45} isAnimationActive={false} className="cursor-pointer" onClick={(d: unknown) => { const o = d as { id?: string; payload?: { id?: string } }; const id = o.id ?? o.payload?.id; if (id) open(id) }} />
+        <Scatter data={pts} fill="var(--color-y)" fillOpacity={0.45} isAnimationActive={false} shape={hitDot(open)} />
         <Line data={trend} dataKey="y" stroke="var(--color-y)" strokeWidth={2.5} dot={false} isAnimationActive={false} tooltipType="none" />
       </ComposedChart>
     </ChartContainer>
@@ -268,7 +269,7 @@ export function Form() {
             <ComposedChart data={weekly}>
               <CartesianGrid vertical={false} />
               <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={30} />
-              <YAxis tickLine={false} axisLine={false} width={56} tickFormatter={(v: number) => `${v} km`} />
+              <YAxis tickLine={false} axisLine={false} width={56} tickFormatter={(v: number) => `${v}\u00a0km`} />
               <ChartTooltip content={<ChartTooltipContent />} />
               <Bar dataKey="km" fill="var(--color-km)" radius={2} />
               <Line dataKey="avg" stroke="var(--color-avg)" strokeWidth={2.5} dot={false} />

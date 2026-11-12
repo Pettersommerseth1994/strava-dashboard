@@ -11,11 +11,11 @@ export function Brand({ m }: { m: BrandMeta }) {
   const parts = m.name.split(' ')
   const initials = (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase()
   return (
-    <div className="flex min-w-0 items-center gap-4">
+    <div className="flex min-w-0 items-center gap-3 sm:gap-4">
       <InsyteLogo />
-      <div className="hidden min-w-0 items-center gap-2.5 rounded-full border py-1 pr-3.5 pl-1 sm:flex">
+      <div className="flex min-w-0 items-center gap-2.5 rounded-full border p-1 sm:pr-3.5" title={m.name}>
         <span className="bg-muted grid size-7 shrink-0 place-items-center rounded-full text-[11px] font-semibold">{initials}</span>
-        <div className="min-w-0 leading-tight">
+        <div className="hidden min-w-0 leading-tight sm:block">
           <p className="truncate text-xs font-medium">{m.name}</p>
           <p className="text-muted-foreground truncate text-[10.5px] tabular-nums">{m.count} · siden {m.since}</p>
         </div>

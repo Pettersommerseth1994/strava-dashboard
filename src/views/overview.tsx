@@ -1,6 +1,7 @@
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis } from 'recharts'
-import { Activity as ActivityIcon, CalendarDays, Flame, Gauge, Mountain, Route, Timer } from 'lucide-react'
+import { Activity as ActivityIcon, CalendarDays, Flame, Gauge, Mountain, RotateCcw, Route, Timer } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -37,6 +38,8 @@ function HeatStat({ label, value, sub }: { label: string; value: string; sub?: s
 
 function Heatmap({ acts, to, onDay }: { acts: Activity[]; to: string; onDay: (d: string) => void }) {
   const [hover, setHover] = useState<string | null>(null)
+  const scroller = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => { const el = scroller.current; if (el) el.scrollLeft = el.scrollWidth }, [to])
   const today = todayStr()
   const end = addDays(to, 6 - ((new Date(to + 'T00:00:00Z').getUTCDay() + 6) % 7))
   const start = addDays(end, -53 * 7 + 1)
@@ -82,7 +85,7 @@ function Heatmap({ acts, to, onDay }: { acts: Activity[]; to: string; onDay: (d:
         <HeatStat label="Mest aktive ukedag" value={DAYS_LONG[stats.wd][0].toUpperCase() + DAYS_LONG[stats.wd].slice(1)} sub="etter treningstid" />
       </div>
 
-      <div className="overflow-x-auto pb-1">
+      <div ref={scroller} className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
         <div className="grid min-w-[760px] gap-[3px]" style={{ gridTemplateColumns: '1.75rem repeat(53, minmax(0, 1fr))' }} onMouseLeave={() => setHover(null)}>
           <div />
           {months.map((m, w) => <div key={w} className="text-muted-foreground h-4 overflow-visible text-[10px] leading-4 whitespace-nowrap">{m}</div>)}
@@ -132,7 +135,7 @@ function Heatmap({ acts, to, onDay }: { acts: Activity[]; to: string; onDay: (d:
 }
 
 export function Overview() {
-  const { acts, prevActs, compare, range, prevRange, all, goRange, open, sports, setSports, sportActs } = useStore()
+  const { acts, prevActs, compare, range, prevRange, all, goRange, open, sports, setSports, sportActs, period, setPeriod } = useStore()
   const [metric, setMetric] = useState<Metric>('dist')
   const [gran, setGran] = useState<Gran | 'auto'>('auto')
   const today = todayStr()
@@ -166,6 +169,9 @@ export function Overview() {
     return [...mp.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1)).slice(0, 36).map(([k, v]) => ({ k, ...sumBy(v) }))
   }, [sportActs, tg])
 
+  const isDefault = period.kind === 'all' && gran === 'auto' && metric === 'dist'
+  const resetChart = () => { setPeriod({ kind: 'all', offset: 0 }); setGran('auto'); setMetric('dist') }
+
   const onBar = (st: unknown) => {
     const i = (st as { activeTooltipIndex?: number })?.activeTooltipIndex
     if (i == null) return
@@ -175,7 +181,7 @@ export function Overview() {
 
   return (
     <div className="space-y-6">
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-7">
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 max-sm:[&>*:last-child:nth-child(odd)]:col-span-2">
         <Kpi icon={Route} label="Distanse" value={`${fmtInt(s.dist / 1000)} km`} delta={dl(s.dist, p.dist)} sub={showP ? `fra ${fmtInt(p.dist / 1000)} km` : `${fmtNum(s.dist / 40075000, 2)} × jorda`} />
         <Kpi icon={Timer} label="Tid" value={fmtHours(s.mov)} delta={dl(s.mov, p.mov)} sub={showP ? `fra ${fmtHours(p.mov)}` : `${fmtNum(s.mov / 86400, 1)} døgn`} />
         <Kpi icon={Mountain} label="Høydemeter" value={`${fmtInt(s.up)} m`} delta={dl(s.up, p.up)} sub={showP ? `fra ${fmtInt(p.up)} m` : `${fmtNum(s.up / 8849, 1)} × Everest`} />
@@ -189,7 +195,11 @@ export function Overview() {
         title="Utvikling over tid"
         desc={`Trykk på en søyle for å zoome inn · ${g === 'day' ? 'per dag' : g === 'week' ? 'per uke' : g === 'month' ? 'per måned' : 'per år'}`}
         action={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex w-max items-center gap-2 sm:w-auto sm:flex-wrap">
+            <Button variant="outline" size="icon-sm" onClick={resetChart} disabled={isDefault} aria-label="Tilbake til standardvisning" title="Tilbake til alle år, per år">
+              <RotateCcw />
+            </Button>
+            <div className="bg-foreground/20 mx-1.5 hidden h-5 w-px sm:block" aria-hidden />
             <ToggleGroup value={[gran]} onValueChange={(v) => v[0] && setGran(v[0] as Gran | 'auto')} variant="outline" size="sm">
               {([['auto', 'Auto'], ['day', 'Dag'], ['week', 'Uke'], ['month', 'Mnd'], ['year', 'År']] as const).map(([k, l]) => <ToggleGroupItem key={k} value={k}>{l}</ToggleGroupItem>)}
             </ToggleGroup>
@@ -204,7 +214,7 @@ export function Overview() {
           <BarChart data={buckets} onClick={onBar} className={g !== 'day' ? 'cursor-pointer' : ''}>
             <CartesianGrid vertical={false} />
             <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={20} />
-            <YAxis tickLine={false} axisLine={false} width={metric === 'load' ? 88 : 72} tickFormatter={(v: number) => `${fmtInt(v)} ${m.unit}`} />
+            <YAxis tickLine={false} axisLine={false} width={metric === 'load' ? 88 : 72} tickFormatter={(v: number) => `${fmtInt(v)}\u00a0${m.unit}`} />
             <ChartTooltip content={<ChartTooltipContent />} />
             {present.map((k) => <Bar key={k} dataKey={k} stackId="a" fill={`var(--color-${k})`} />)}
           </BarChart>

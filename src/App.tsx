@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { MessageSquare, Moon, Sparkles, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -8,7 +8,7 @@ import { InsightPanel } from '@/components/insight-panel'
 import { PeriodBar } from '@/components/filters'
 import { Brand } from '@/components/brand'
 import { StoreProvider } from '@/lib/store'
-import { type Activity, fmtDate, fmtInt } from '@/lib/data'
+import { type Activity, fmtDate, fmtInt, sanitize } from '@/lib/data'
 import { Overview } from '@/views/overview'
 import { Records } from '@/views/records'
 import { Form, Progress } from '@/views/progress'
@@ -29,9 +29,13 @@ function useTheme() {
 /** Chatten er skjult inntil videre – sett til true for å vise «Spør dataen» igjen */
 const SHOW_CHAT = false
 
-const TABS = [
+/** Forslag til nye funksjoner – vises bare lokalt (npm run dev), aldri på nettsiden */
+const Lab = import.meta.env.DEV ? lazy(() => import('@/views/lab').then((m) => ({ default: m.Lab }))) : null
+
+const TABS: [string, string][] = [
   ['oversikt', 'Oversikt'], ['rekorder', 'Rekorder'], ['progresjon', 'Progresjon'], ['form', 'Form'], ['utforsker', 'Utforsker'], ['okter', 'Økter'],
-] as const
+  ...(Lab ? [['forslag', 'Forslag ✦'] as [string, string]] : []),
+]
 
 export default function App() {
   const [dark, toggle] = useTheme()
@@ -39,7 +43,7 @@ export default function App() {
   const [tab, setTab] = useState<string>(() => { try { return sessionStorage.getItem('tab') || 'oversikt' } catch { return 'oversikt' } })
   const [insight, setInsight] = useState(false)
   const [chat, setChat] = useState(false)
-  useEffect(() => { fetch(`${import.meta.env.BASE_URL}data.json`).then((r) => r.json()).then(setAll) }, [])
+  useEffect(() => { fetch(`${import.meta.env.BASE_URL}data.json`).then((r) => r.json()).then((d: Activity[]) => setAll(sanitize(d))) }, [])
   useEffect(() => { try { sessionStorage.setItem('tab', tab) } catch { /* ignore */ } }, [tab])
   useEffect(() => {
     if (!all) return
@@ -72,7 +76,7 @@ export default function App() {
             </div>
           </div>
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-3 px-4 pb-2.5">
-            <div className="max-w-full overflow-x-auto overflow-y-hidden">
+            <div className="no-scrollbar max-w-full overflow-x-auto overflow-y-hidden max-sm:[mask-image:linear-gradient(to_right,black_80%,transparent)]">
               <TabsList variant="line" className="h-9">
                 {TABS.map(([k, l]) => <TabsTrigger key={k} value={k} className="px-2.5">{l}</TabsTrigger>)}
               </TabsList>
@@ -87,7 +91,8 @@ export default function App() {
           <TabsContent value="form"><Form /></TabsContent>
           <TabsContent value="utforsker"><Explorer /></TabsContent>
           <TabsContent value="okter"><Sessions /></TabsContent>
-          <footer className="text-muted-foreground py-8 text-center text-xs">Data fra Strava-eksport · bygget med shadcn/ui</footer>
+          {Lab && <TabsContent value="forslag"><Suspense fallback={<p className="text-muted-foreground py-16 text-center text-sm">Laster forslag …</p>}><Lab /></Suspense></TabsContent>}
+          <footer className="text-muted-foreground py-8 text-center text-xs">Utviklet av Petter Sommerseth med Claude AI</footer>
         </main>
       </Tabs>
       <InsightPanel open={insight} onClose={() => setInsight(false)} />

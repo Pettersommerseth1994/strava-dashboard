@@ -229,3 +229,20 @@ export function toCsv(acts: Activity[]) {
   const q = (s: string | number | undefined) => `"${String(s ?? '').replace(/"/g, '""')}"`
   return [head.join(','), ...acts.map((a) => [a.d, a.n, a.t, (a.dist / 1000).toFixed(2), a.mov, a.up, a.hr ?? '', a.mhr ?? '', a.cal ?? '', a.load].map(q).join(','))].join('\n')
 }
+
+/** Raskeste realistiske tempo (sek/km) per idrett – raskere beste-innsats er GPS-glipp */
+const MIN_PACE: Record<string, number> = { Løpetur: 160, Gåtur: 160, Langrenn: 60, Rulleski: 60, Sykkeltur: 40 }
+
+/** Fjerner umulige beste-innsatser (GPS-hopp) slik at de ikke blir rekorder */
+const MAX_SPEED: Record<string, number> = { Løpetur: 9, Gåtur: 9, Langrenn: 25, Rulleski: 25, Sykkeltur: 30 } // m/s
+
+export function sanitize(all: Activity[]): Activity[] {
+  for (const a of all) {
+    if (a.vmax && a.vmax > (MAX_SPEED[a.t] ?? 30)) a.vmax = undefined
+    if (!a.be) continue
+    const min = MIN_PACE[a.t] ?? 40
+    for (const k of Object.keys(a.be)) if (a.be[k][0] / (BE_DIST[k] / 1000) < min) delete a.be[k]
+    if (!Object.keys(a.be).length) a.be = undefined
+  }
+  return all
+}

@@ -13,17 +13,29 @@ function shuffled<T>(arr: T[]) {
   return a
 }
 
+/** Stokker slik at omtrent to av tre kort handler om inneværende år */
+function deal(all: Insight[]) {
+  const p = shuffled(all.filter((x) => x.prio)), o = shuffled(all.filter((x) => !x.prio))
+  const out: Insight[] = []
+  while (p.length || o.length) {
+    if (p.length) out.push(p.shift()!)
+    if (p.length) out.push(p.shift()!)
+    if (o.length) out.push(o.shift()!)
+  }
+  return out
+}
+
 export function InsightPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { all, open: openAct, goRange } = useStore()
   const insights = useMemo(() => buildInsights(all), [all])
-  const [deck, setDeck] = useState<Insight[]>(() => shuffled(insights))
+  const [deck, setDeck] = useState<Insight[]>(() => deal(insights))
   const [i, setI] = useState(0)
   const [spin, setSpin] = useState(0)
-  useEffect(() => { setDeck(shuffled(insights)); setI(0) }, [insights])
+  useEffect(() => { setDeck(deal(insights)); setI(0) }, [insights])
   const cur = deck[i % Math.max(1, deck.length)]
   const next = () => {
     setSpin((s) => s + 1)
-    if (i + 1 >= deck.length) { const d = shuffled(insights); if (d[0]?.id === cur?.id) d.push(d.shift()!); setDeck(d); setI(0) } else setI(i + 1)
+    if (i + 1 >= deck.length) { const d = deal(insights); if (d[0]?.id === cur?.id) d.push(d.shift()!); setDeck(d); setI(0) } else setI(i + 1)
   }
   if (!cur) return null
   const Icon = ICON[cur.kind]

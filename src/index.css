@@ -153,3 +153,39 @@
   --z1: oklch(0.42 0.04 255); --z2: oklch(0.62 0.06 255); --z3: oklch(0.55 0.08 60);
   --z4: oklch(0.65 0.12 52); --z5: oklch(0.74 0.16 52); --z6: oklch(0.84 0.13 70);
 }
+
+/* Tailwind v4 fjerner pekerhånd på knapper – legg den tilbake for alt som kan trykkes */
+@layer base {
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='tab']:not([aria-disabled='true']),
+  [role='menuitem'],
+  [role='menuitemradio'],
+  [role='menuitemcheckbox'],
+  [role='option'],
+  [role='switch'],
+  label:has(input, [role='switch']),
+  summary,
+  select {
+    cursor: pointer;
+  }
+  .recharts-pie-sector, .recharts-bar-rectangle { cursor: inherit; }
+}
+
+/* Mobil: skjul rullefelt der vi ruller sidelengs, og gi fingre større trykkflater */
+@layer utilities {
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+}
+@media (pointer: coarse) {
+  [data-slot='toggle-group-item'][data-size='sm'],
+  [data-slot='button'].h-7,
+  [data-slot='button'].h-8,
+  [data-slot='select-trigger'],
+  [data-slot='tabs-trigger'] {
+    min-height: 2.25rem;
+  }
+  [data-slot='button'].size-7, [data-slot='button'].size-8, [data-slot='button'].size-6 {
+    min-width: 2.25rem; min-height: 2.25rem;
+  }
+}

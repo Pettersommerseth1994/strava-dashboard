@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { Key, ReactNode } from 'react'
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
@@ -33,8 +33,8 @@ export function ChartCard({ title, desc, action, children, className }: { title:
   return (
     <Card className={className}>
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2">
-        <div><CardTitle>{title}</CardTitle>{desc && <CardDescription>{desc}</CardDescription>}</div>
-        {action}
+        <div className="min-w-0"><CardTitle>{title}</CardTitle>{desc && <CardDescription>{desc}</CardDescription>}</div>
+        {action && <div className="no-scrollbar -mx-4 max-w-[calc(100%+2rem)] overflow-x-auto px-4 sm:mx-0 sm:max-w-full sm:overflow-visible sm:px-0">{action}</div>}
       </CardHeader>
       <CardContent>{children}</CardContent>
     </Card>
@@ -59,3 +59,26 @@ export function ActivityRow({ a, onClick, right }: { a: Activity; onClick: () =>
 }
 
 export const axisProps = { tickLine: false, axisLine: false } as const
+
+type DotProps = { cx?: number; cy?: number; fill?: string; fillOpacity?: number | string; payload?: { id?: string } }
+
+/**
+ * Prikk for Recharts med større, usynlig trykkflate og pekerhånd.
+ * Brukes som `shape` på Scatter og `dot` på Line.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function hitDot(onPick: (id: string) => void, opts: { r?: number; hit?: number; fill?: string; opacity?: number; ring?: boolean } = {}) {
+  const { r = 4.5, hit = 12, fill, opacity, ring } = opts
+  return function HitDot(p: DotProps & { key?: Key | null }) {
+    if (p.cx == null || p.cy == null || !isFinite(p.cx) || !isFinite(p.cy)) return <g key={p.key ?? undefined} />
+    const id = p.payload?.id
+    return (
+      <g key={p.key ?? `${p.cx}-${p.cy}`} className={id ? 'group/dot cursor-pointer' : undefined} onClick={id ? (e) => { e.stopPropagation(); onPick(id) } : undefined}>
+        <circle cx={p.cx} cy={p.cy} r={hit} fill="transparent" />
+        <circle cx={p.cx} cy={p.cy} r={r} fill={fill ?? p.fill} fillOpacity={opacity ?? p.fillOpacity ?? 1}
+          stroke={ring ? 'var(--card)' : undefined} strokeWidth={ring ? 2 : undefined}
+          className="origin-center transition-[r] duration-150 [transform-box:fill-box] group-hover/dot:scale-150" />
+      </g>
+    )
+  }
+}

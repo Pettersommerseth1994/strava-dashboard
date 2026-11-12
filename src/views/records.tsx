@@ -7,7 +7,7 @@ import { ChartContainer, ChartTooltip } from '@/components/ui/chart'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { ChartCard, SportDot } from '@/components/common'
+import { ChartCard, SportDot, hitDot } from '@/components/common'
 import { useStore } from '@/lib/store'
 import {
   type Activity, BE_DIST, BE_LABELS, METRICS, METRIC, bucketKey, bucketRange, dayKey, fmtClock, fmtDate, fmtDur, fmtHours, fmtInt, fmtKm, fmtMonth, fmtNum,
@@ -18,12 +18,12 @@ const SPORTS = ['Løpetur', 'Langrenn', 'Rulleski', 'Sykkeltur', 'Alle']
 
 function RecCard({ icon: Icon, title, value, a, sub, onClick }: { icon: typeof Route; title: string; value: string; a?: Activity; sub?: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="text-left">
+    <button onClick={onClick} className="min-w-0 text-left">
       <Card size="sm" className="hover:ring-foreground/30 relative h-full overflow-hidden transition-shadow hover:ring-1">
         <div className="absolute inset-y-0 left-0 w-1" style={{ background: a ? sportColor(a.t) : 'var(--border)' }} />
-        <CardContent className="pl-5">
-          <div className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium tracking-wide uppercase"><Icon className="size-3.5" />{title}</div>
-          <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
+        <CardContent className="min-w-0 pl-4 sm:pl-5">
+          <div className="text-muted-foreground flex items-center gap-1.5 text-[11px] font-medium tracking-wide uppercase sm:text-xs"><Icon className="size-3.5 shrink-0" /><span className="truncate">{title}</span></div>
+          <p className="mt-1 text-lg font-semibold tabular-nums sm:text-2xl">{value}</p>
           <p className="mt-1 truncate text-sm">{a ? a.n : sub}</p>
           <p className="text-muted-foreground text-xs">{a ? `${a.t} · ${fmtDate(a.d)}` : ''}</p>
         </CardContent>
@@ -84,9 +84,11 @@ export function Records() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
-        <ToggleGroup value={[sport]} onValueChange={(v) => v[0] && setSport(v[0])} variant="outline" size="sm">
-          {SPORTS.map((s) => <ToggleGroupItem key={s} value={s}>{s}</ToggleGroupItem>)}
-        </ToggleGroup>
+        <div className="no-scrollbar -mx-4 max-w-[calc(100%+2rem)] overflow-x-auto px-4 sm:mx-0 sm:max-w-full sm:px-0">
+          <ToggleGroup value={[sport]} onValueChange={(v) => v[0] && setSport(v[0])} variant="outline" size="sm">
+            {SPORTS.map((s) => <ToggleGroupItem key={s} value={s}>{s}</ToggleGroupItem>)}
+          </ToggleGroup>
+        </div>
         <ToggleGroup value={[scope]} onValueChange={(v) => v[0] && setScope(v[0] as 'all' | 'period')} variant="outline" size="sm">
           <ToggleGroupItem value="all">Hele historikken</ToggleGroupItem>
           <ToggleGroupItem value="period">Valgt periode</ToggleGroupItem>
@@ -98,7 +100,7 @@ export function Records() {
         <div className="grid gap-6 lg:grid-cols-5">
           <ChartCard className="lg:col-span-2" title="Personlige rekorder" desc="Raskeste sammenhengende innsats i én økt · trykk for å se utviklingen">
             <Table>
-              <TableHeader><TableRow><TableHead>Distanse</TableHead><TableHead className="text-right">Tid</TableHead><TableHead className="text-right">{foot ? 'Pace' : 'Fart'}</TableHead><TableHead className="text-right">Dato</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>Distanse</TableHead><TableHead className="text-right">Tid</TableHead><TableHead className="hidden text-right sm:table-cell">{foot ? 'Pace' : 'Fart'}</TableHead><TableHead className="text-right">Dato</TableHead></TableRow></TableHeader>
               <TableBody>
                 {bests.map((r) => (
                   <TableRow key={r.k} className={`cursor-pointer ${r.k === beK ? 'bg-muted' : ''}`} onClick={() => setBeKey(r.k)}>
@@ -106,7 +108,7 @@ export function Records() {
                     <TableCell className="text-right font-semibold tabular-nums">
                       <button className="hover:underline" onClick={(e) => { e.stopPropagation(); open(r.best.id) }}>{fmtClock(r.best.be![r.k][0])}</button>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">{foot ? fmtPace(BE_DIST[r.k], r.best.be![r.k][0]) : `${fmtNum((BE_DIST[r.k] / r.best.be![r.k][0]) * 3.6, 1)} km/t`}</TableCell>
+                    <TableCell className="hidden text-right tabular-nums sm:table-cell">{foot ? fmtPace(BE_DIST[r.k], r.best.be![r.k][0]) : `${fmtNum((BE_DIST[r.k] / r.best.be![r.k][0]) * 3.6, 1)} km/t`}</TableCell>
                     <TableCell className="text-muted-foreground text-right whitespace-nowrap">{fmtDate(r.best.d)}</TableCell>
                   </TableRow>
                 ))}
@@ -120,8 +122,8 @@ export function Records() {
                 <XAxis dataKey="x" type="number" domain={['dataMin', 'dataMax']} scale="time" tickLine={false} axisLine={false} tickFormatter={(v) => fmtMonth(new Date(v).toISOString())} minTickGap={40} />
                 <YAxis dataKey="y" type="number" reversed domain={['auto', 'auto']} tickLine={false} axisLine={false} width={50} tickFormatter={(v) => fmtClock(v)} />
                 <ChartTooltip cursor={false} content={({ payload }) => { const p = payload?.[0]?.payload as { n?: string; d?: string; y?: number } | undefined; if (!p?.n) return null; return <div className="bg-background rounded-lg border px-2.5 py-1.5 text-xs shadow-xl"><p className="font-medium">{p.n}</p><p className="text-muted-foreground">{fmtDate(p.d!)} · {fmtClock(p.y!)}</p></div> }} />
-                <Scatter data={prog.pts} fill="var(--color-y)" fillOpacity={0.45} onClick={(d: unknown) => { const id = (d as { id?: string; payload?: { id?: string } }); open(id.id ?? id.payload?.id ?? null) }} className="cursor-pointer" isAnimationActive={false} />
-                <Line data={prog.pr} dataKey="y" type="stepAfter" stroke="var(--brand)" strokeWidth={2.5} dot={{ r: 4, fill: 'var(--brand)' }} activeDot={{ r: 6, onClick: (_: unknown, e: unknown) => { const id = (e as { payload?: { id?: string } }).payload?.id; if (id) open(id) } }} isAnimationActive={false} />
+                <Scatter data={prog.pts} fill="var(--color-y)" fillOpacity={0.45} shape={hitDot(open, { r: 4.5, hit: 11 })} isAnimationActive={false} />
+                <Line data={prog.pr} dataKey="y" type="stepAfter" stroke="var(--brand)" strokeWidth={2.5} dot={hitDot(open, { r: 5.5, hit: 16, fill: 'var(--brand)', ring: true })} activeDot={false} isAnimationActive={false} />
               </ComposedChart>
             </ChartContainer>
           </ChartCard>
@@ -130,7 +132,7 @@ export function Records() {
 
       <section>
         <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold"><Award className="size-5 text-[var(--brand)]" />Toppresultater</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <RecCard icon={Route} title="Lengste distanse" value={longest ? `${fmtKm(longest.dist, 2)} km` : '–'} a={longest} onClick={() => longest && open(longest.id)} />
           <RecCard icon={Timer} title="Lengste tid" value={longestT ? fmtDur(longestT.mov) : '–'} a={longestT} onClick={() => longestT && open(longestT.id)} />
           <RecCard icon={Mountain} title="Mest høydemeter" value={mostUp ? `${fmtInt(mostUp.up)} m` : '–'} a={mostUp} onClick={() => mostUp && open(mostUp.id)} />
