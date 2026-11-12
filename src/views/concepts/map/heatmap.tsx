@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
-import { ExternalLink, ShieldCheck, X } from 'lucide-react'
+import { ExternalLink, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { useStore } from '@/lib/store'
@@ -82,7 +82,6 @@ function HeatmapInner({ tracks }: { tracks: TrackMap }) {
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-muted-foreground text-xs tabular-nums"><b className="text-foreground">{lines.length}</b> ruter · {fmtKm(km, 0)} km · trykk på en rute</p>
-        <p className="text-muted-foreground flex items-center gap-1.5 text-xs"><ShieldCheck className="size-3.5 text-[var(--brand)]" />Start og slutt er skjult</p>
       </div>
       <div className="relative">
         <MapBox boxRef={box} className="h-[22rem] sm:h-[30rem]" />

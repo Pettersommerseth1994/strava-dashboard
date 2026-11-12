@@ -4,7 +4,7 @@ import { MemoryCarousel } from './concepts/media/carousel'
 import { MediaWall } from './concepts/media/wall'
 import { Heatmap } from './concepts/map/heatmap'
 
-/** Minner: tilbakeblikk, minnekarusell, rutekart og bildevegg */
+/** Historie: tilbakeblikk, minnekarusell, rutekart og bildevegg */
 export function Memories() {
   return (
     <div className="space-y-6">
@@ -14,7 +14,7 @@ export function Memories() {
       <ChartCard title="Minnekarusell" desc="Bilder og videoer fra øktene, nyeste først · trykk play for å se videoen, trykk på kortet for å åpne økten">
         <MemoryCarousel />
       </ChartCard>
-      <ChartCard title="Rutekart" desc="Alle rutene dine i ett kart · filtrer på idrett og år, trykk på en rute for å se økten">
+      <ChartCard title="Rutekart" desc="Alle rutene dine i ett kart · filtrer på idrett og år, trykk på en rute for å se økten · kartdata © OpenStreetMap">
         <Heatmap />
       </ChartCard>
       <ChartCard title="Bildevegg" desc="Alle bilder og videoer · trykk for å åpne i full størrelse">

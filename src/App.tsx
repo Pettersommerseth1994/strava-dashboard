@@ -38,7 +38,7 @@ const Lab = import.meta.env.DEV ? lazy(() => import('@/views/lab').then((m) => (
 const Concepts = import.meta.env.DEV ? lazy(() => import('@/views/concepts').then((m) => ({ default: m.Concepts }))) : null
 
 const TABS: [string, string][] = [
-  ['oversikt', 'Oversikt'], ['rekorder', 'Rekorder'], ['progresjon', 'Progresjon'], ['form', 'Form'], ['utforsker', 'Utforsker'], ['okter', 'Økter'], ['minner', 'Minner'],
+  ['oversikt', 'Oversikt'], ['rekorder', 'Rekorder'], ['progresjon', 'Progresjon'], ['form', 'Form'], ['utforsker', 'Utforsker'], ['okter', 'Økter'], ['historie', 'Historie'],
   ...(Lab ? [['forslag', 'Forslag ✦'] as [string, string]] : []),
   ...(Concepts ? [['konsepter', 'Konsepter ✦'] as [string, string]] : []),
 ]
@@ -46,7 +46,7 @@ const TABS: [string, string][] = [
 export default function App() {
   const [dark, toggle] = useTheme()
   const [all, setAll] = useState<Activity[] | null>(null)
-  const [tab, setTab] = useState<string>(() => { try { return sessionStorage.getItem('tab') || 'oversikt' } catch { return 'oversikt' } })
+  const [tab, setTab] = useState<string>(() => { try { const t = sessionStorage.getItem('tab'); return t && TABS.some(([k]) => k === t) ? t : 'oversikt' } catch { return 'oversikt' } })
   const [insight, setInsight] = useState(false)
   const [chat, setChat] = useState(false)
   useEffect(() => { fetch(`${import.meta.env.BASE_URL}data.json`).then((r) => r.json()).then((d: Activity[]) => setAll(sanitize(d))) }, [])
@@ -84,7 +84,7 @@ export default function App() {
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-3 px-4 pb-2.5">
             <div className="no-scrollbar max-w-full overflow-x-auto overflow-y-hidden max-sm:[mask-image:linear-gradient(to_right,black_80%,transparent)]">
               <TabsList variant="line" className="h-9">
-                {TABS.map(([k, l]) => <TabsTrigger key={k} value={k} className="px-2.5">{k === 'minner' ? <MemoriesTabLabel active={tab === 'minner'} /> : l}</TabsTrigger>)}
+                {TABS.map(([k, l]) => <TabsTrigger key={k} value={k} className="px-2.5">{k === 'historie' ? <MemoriesTabLabel active={tab === 'historie'} /> : l}</TabsTrigger>)}
               </TabsList>
             </div>
             <PeriodBar />
@@ -97,7 +97,7 @@ export default function App() {
           <TabsContent value="form"><Form /></TabsContent>
           <TabsContent value="utforsker"><Explorer /></TabsContent>
           <TabsContent value="okter"><Sessions /></TabsContent>
-          <TabsContent value="minner"><Suspense fallback={<p className="text-muted-foreground py-16 text-center text-sm">Laster minner …</p>}><Memories /></Suspense></TabsContent>
+          <TabsContent value="historie"><Suspense fallback={<p className="text-muted-foreground py-16 text-center text-sm">Laster historie …</p>}><Memories /></Suspense></TabsContent>
           {Concepts && <TabsContent value="konsepter"><Suspense fallback={<p className="text-muted-foreground py-16 text-center text-sm">Laster konsepter …</p>}><Concepts /></Suspense></TabsContent>}
           {Lab && <TabsContent value="forslag"><Suspense fallback={<p className="text-muted-foreground py-16 text-center text-sm">Laster forslag …</p>}><Lab /></Suspense></TabsContent>}
           <footer className="text-muted-foreground py-8 text-center text-xs">Utviklet av Petter Sommerseth med Claude AI</footer>

@@ -22,12 +22,12 @@ export function useNewThrowbacks(active: boolean) {
   return hits.length && seen !== key ? hits.length : 0
 }
 
-/** Faneetikett for Minner med varselprikk */
+/** Faneetikett for Historie med varselprikk */
 export function MemoriesTabLabel({ active }: { active: boolean }) {
   const n = useNewThrowbacks(active)
   return (
     <span className="relative inline-flex items-center gap-1.5">
-      Minner
+      Historie
       {n > 0 && (
         <span className="grid h-4 min-w-4 place-items-center rounded-full bg-[var(--brand)] px-1 text-[10px] leading-none font-bold text-white tabular-nums" aria-label={`${n} nye tilbakeblikk`}>
           {n}

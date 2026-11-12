@@ -56,7 +56,7 @@ export function useLeafletMap(ref: RefObject<HTMLDivElement | null>, opts: L.Map
   const tiles = useRef<L.TileLayer | null>(null)
   useEffect(() => {
     if (!ref.current) return
-    const m = L.map(ref.current, { scrollWheelZoom: false, zoomSnap: 0.25, preferCanvas: true, attributionControl: true, ...opts })
+    const m = L.map(ref.current, { scrollWheelZoom: false, zoomSnap: 0.25, preferCanvas: true, attributionControl: false, ...opts })
     m.setView([63.43, 10.4], 11)
     const ro = new ResizeObserver(() => m.invalidateSize())
     ro.observe(ref.current)

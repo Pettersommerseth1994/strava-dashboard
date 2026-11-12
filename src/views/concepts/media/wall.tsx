@@ -15,12 +15,17 @@ export function MediaWall() {
   const [sport, setSport] = useState('alle')
   const [kind, setKind] = useState('alle')
   const [lb, setLb] = useState<number | null>(null)
+  const [page, setPage] = useState(0)
+  const PAGE = 24
 
   const years = useMemo(() => [...new Set((items ?? []).map((m) => m.a.d.slice(0, 4)))].sort().reverse(), [items])
   const sports = useMemo(() => [...new Set((items ?? []).map((m) => sportOf(m.a.t)))], [items])
   const list = useMemo(() => (items ?? []).filter((m) =>
     (year === 'alle' || m.a.d.startsWith(year)) && (sport === 'alle' || sportOf(m.a.t) === sport) && (kind === 'alle' || m.k === kind)), [items, year, sport, kind])
 
+  const pages = Math.max(1, Math.ceil(list.length / PAGE))
+  const pg = Math.min(page, pages - 1)
+  const shown = list.slice(pg * PAGE, pg * PAGE + PAGE)
   const cur = lb == null ? null : list[lb]
   const step = (n: number) => setLb((i) => (i == null || !list.length ? i : (i + n + list.length) % list.length))
 
@@ -37,7 +42,7 @@ export function MediaWall() {
 
   const toggle = (v: string, set: (s: string) => void, opts: [string, string][]) => (
     <div className="no-scrollbar -mx-4 max-w-[calc(100%+2rem)] overflow-x-auto px-4 sm:mx-0 sm:max-w-full sm:px-0">
-      <ToggleGroup value={[v]} onValueChange={(x) => x[0] && set(x[0])} variant="outline" size="sm">
+      <ToggleGroup value={[v]} onValueChange={(x) => { if (x[0]) { set(x[0]); setPage(0) } }} variant="outline" size="sm">
         {opts.map(([k, l]) => <ToggleGroupItem key={k} value={k}>{l}</ToggleGroupItem>)}
       </ToggleGroup>
     </div>
@@ -54,7 +59,7 @@ export function MediaWall() {
 
       {/* Murverk med CSS-kolonner – videoer får høyere format for variasjon */}
       <div className="columns-2 gap-2 sm:columns-3 lg:columns-4 [&>*]:mb-2">
-        {list.map((m, i) => (
+        {shown.map((m, j) => { const i = pg * PAGE + j; return (
           <button key={m.key} onClick={() => setLb(i)}
             className={`group relative block w-full cursor-pointer break-inside-avoid overflow-hidden rounded-xl bg-black ${m.k === 'vid' ? 'aspect-[9/14]' : i % 3 === 0 ? 'aspect-[3/4]' : 'aspect-square'}`}>
             <MemThumb m={m} className="transition-transform duration-500 group-hover:scale-105" />
@@ -63,8 +68,17 @@ export function MediaWall() {
               <span className="text-white/70">{fmtDate(m.a.d)}</span>
             </span>
           </button>
-        ))}
+        ) })}
       </div>
+      {pages > 1 && (
+        <div className="flex items-center justify-between gap-2 pt-1 text-sm">
+          <span className="text-muted-foreground tabular-nums">Side {pg + 1} av {pages}</span>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={pg === 0} onClick={() => setPage(pg - 1)}><ChevronLeft />Forrige</Button>
+            <Button variant="outline" size="sm" disabled={pg >= pages - 1} onClick={() => setPage(pg + 1)}>Neste<ChevronRight /></Button>
+          </div>
+        </div>
+      )}
 
       {cur && (
         <div className="fixed inset-0 z-50 flex flex-col bg-black/95 text-white backdrop-blur" role="dialog" aria-label="Lysboks">

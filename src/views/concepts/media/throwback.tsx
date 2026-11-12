@@ -59,7 +59,7 @@ export function Throwback() {
         <p className="text-muted-foreground py-10 text-center text-sm">Ingen tidligere år med bilder rundt denne datoen.</p>
       ) : (
         <>
-          <button onClick={() => open(cur.id)} className="relative block aspect-[4/3] w-full cursor-pointer overflow-hidden rounded-2xl bg-black text-left sm:aspect-[16/9]">
+          <button onClick={() => open(cur.id)} className="relative block h-60 w-full cursor-pointer overflow-hidden rounded-2xl bg-black text-left sm:h-72">
             <MemThumb key={cur.key} m={cur} playing={cur.k === 'vid'} fit="cover" />
             <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/40" />
             <span className="absolute top-3 left-3 rounded-full bg-[var(--brand)] px-3 py-1 text-xs font-bold text-white shadow">
@@ -68,7 +68,7 @@ export function Throwback() {
             <span className="absolute top-3 right-3"><SportPill a={cur.a} /></span>
             <span className="absolute inset-x-0 bottom-0 p-4 text-white">
               <span className="block text-xs text-white/70">{fmtDate(cur.a.d)}</span>
-              <span className="block text-lg leading-snug font-semibold sm:text-xl">{cur.a.n}</span>
+              <span className="block text-lg leading-snug font-semibold">{cur.a.n}</span>
               <span className="block text-sm text-white/85 tabular-nums">{statLine(cur.a)}</span>
             </span>
           </button>
