@@ -25,8 +25,9 @@ function deal(all: Insight[]) {
   return out
 }
 
-export function InsightPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function InsightPanel({ open, onClose, onRange }: { open: boolean; onClose: () => void; onRange?: (from: string, to: string) => void }) {
   const { all, open: openAct, goRange } = useStore()
+  const showRange = onRange ?? goRange
   const insights = useMemo(() => buildInsights(all), [all])
   const [deck, setDeck] = useState<Insight[]>(() => deal(insights))
   const [i, setI] = useState(0)
@@ -43,7 +44,7 @@ export function InsightPanel({ open, onClose }: { open: boolean; onClose: () => 
     <aside
       aria-live="polite"
       className={cn(
-        'bg-popover/95 text-popover-foreground fixed right-4 bottom-4 z-30 w-[calc(100%-2rem)] rounded-2xl border shadow-2xl backdrop-blur transition-all duration-500 ease-out sm:right-6 sm:bottom-6 sm:w-80',
+        'glass-strong text-popover-foreground fixed right-3 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-30 w-[calc(100%-1.5rem)] rounded-2xl transition-all duration-500 ease-out sm:w-80 md:right-6 md:bottom-6',
         open ? 'translate-x-0 opacity-100' : 'pointer-events-none translate-x-[110%] opacity-0',
       )}
     >
@@ -62,7 +63,7 @@ export function InsightPanel({ open, onClose }: { open: boolean; onClose: () => 
         {cur.actId ? (
           <Button variant="ghost" size="sm" onClick={() => openAct(cur.actId!)}>Åpne økten<ArrowUpRight /></Button>
         ) : cur.range ? (
-          <Button variant="ghost" size="sm" onClick={() => goRange(cur.range![0], cur.range![1])}>Vis perioden<ArrowUpRight /></Button>
+          <Button variant="ghost" size="sm" onClick={() => showRange(cur.range![0], cur.range![1])}>Vis perioden<ArrowUpRight /></Button>
         ) : <span />}
         <Button size="sm" onClick={next} className="gap-1.5"><Shuffle className={cn('transition-transform duration-500', spin % 2 ? 'rotate-180' : '')} />Ny innsikt</Button>
       </div>

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { ActivityRow, ChartCard, Delta, Kpi } from '@/components/common'
+import { ActivityRow, ChartCard, Delta, Kpi, rowAction, useNarrow } from '@/components/common'
 import { Race } from '@/components/race'
 import { YEAR } from '@/lib/year'
 import { useStore } from '@/lib/store'
@@ -38,13 +38,14 @@ function HeatStat({ label, value, sub }: { label: string; value: string; sub?: s
   )
 }
 
-function Heatmap({ acts, to, onDay }: { acts: Activity[]; to: string; onDay: (d: string) => void }) {
+function Heatmap({ acts, to, weeks, onDay }: { acts: Activity[]; to: string; weeks: number; onDay: (d: string) => void }) {
   const [hover, setHover] = useState<string | null>(null)
+  const touch = useMemo(() => matchMedia('(hover: none)').matches, [])
   const scroller = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => { const el = scroller.current; if (el) el.scrollLeft = el.scrollWidth }, [to])
   const today = todayStr()
   const end = addDays(to, 6 - ((new Date(to + 'T00:00:00Z').getUTCDay() + 6) % 7))
-  const start = addDays(end, -53 * 7 + 1)
+  const start = addDays(end, -weeks * 7 + 1)
   const byDay = useMemo(() => {
     const m = new Map<string, DayInfo>()
     for (const a of acts) {
@@ -57,8 +58,8 @@ function Heatmap({ acts, to, onDay }: { acts: Activity[]; to: string; onDay: (d:
     }
     return m
   }, [acts, start, to])
-  const cells = Array.from({ length: 53 * 7 }, (_, i) => { const k = addDays(start, i); return { k, d: byDay.get(k), future: k > to } })
-  const months = Array.from({ length: 53 }, (_, w) => {
+  const cells = Array.from({ length: weeks * 7 }, (_, i) => { const k = addDays(start, i); return { k, d: byDay.get(k), future: k > to } })
+  const months = Array.from({ length: weeks }, (_, w) => {
     const k = addDays(start, w * 7)
     const prev = w ? addDays(start, (w - 1) * 7) : ''
     return !prev || k.slice(5, 7) !== prev.slice(5, 7) ? MONTHS[+k.slice(5, 7) - 1] : ''
@@ -88,13 +89,13 @@ function Heatmap({ acts, to, onDay }: { acts: Activity[]; to: string; onDay: (d:
       </div>
 
       <div ref={scroller} className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
-        <div className="grid min-w-[760px] gap-[3px]" style={{ gridTemplateColumns: '1.75rem repeat(53, minmax(0, 1fr))' }} onMouseLeave={() => setHover(null)}>
+        <div className={`grid gap-[3px] ${weeks > 30 ? 'min-w-[760px]' : ''}`} style={{ gridTemplateColumns: `1.75rem repeat(${weeks}, minmax(0, 1fr))` }} onMouseLeave={() => setHover(null)}>
           <div />
           {months.map((m, w) => <div key={w} className="text-muted-foreground h-4 overflow-visible text-[10px] leading-4 whitespace-nowrap">{m}</div>)}
           {Array.from({ length: 7 }, (_, r) => (
             <Fragment key={r}>
               <div className="text-muted-foreground flex items-center text-[10px]">{r % 2 === 0 ? WEEKDAYS[r] : ''}</div>
-              {Array.from({ length: 53 }, (_, w) => {
+              {Array.from({ length: weeks }, (_, w) => {
                 const c = cells[w * 7 + r]
                 if (c.future) return <div key={w} className="aspect-square" />
                 const l = lvl(c.d?.h ?? 0)
@@ -103,7 +104,7 @@ function Heatmap({ acts, to, onDay }: { acts: Activity[]; to: string; onDay: (d:
                     key={w}
                     onMouseEnter={() => setHover(c.k)}
                     onFocus={() => setHover(c.k)}
-                    onClick={() => c.d && onDay(c.k)}
+                    onClick={() => { if (touch && hover !== c.k) setHover(c.k); else if (c.d) onDay(c.k) }}
                     aria-label={`${fmtDate(c.k)}: ${c.d ? `${c.d.n} økter, ${fmtDur(c.d.h * 3600)}` : 'hvile'}`}
                     style={l ? { background: `color-mix(in oklch, var(--brand) ${LEVELS[l] * 100}%, transparent)` } : undefined}
                     className={`aspect-square rounded-[3px] transition-transform ${l ? '' : 'bg-muted'} ${c.d ? 'cursor-pointer hover:scale-125' : 'cursor-default'} ${hover === c.k ? 'ring-foreground ring-1' : ''} ${c.k === today ? 'ring-foreground/60 ring-1 ring-offset-1 ring-offset-[var(--card)]' : ''}`}
@@ -118,13 +119,13 @@ function Heatmap({ acts, to, onDay }: { acts: Activity[]; to: string; onDay: (d:
       <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3 text-xs">
         <div className="min-h-5 min-w-0 flex-1">
           {hover ? (
-            <p className="truncate">
+            <p className="sm:truncate">
               <span className="font-medium capitalize">{DAYS_LONG[(parseYmd(hover).getUTCDay() + 6) % 7]} {fmtDate(hover)}</span>
               {hv ? (
                 <span className="text-muted-foreground"> · {hv.n} {hv.n === 1 ? 'økt' : 'økter'} · {fmtDur(hv.h * 3600)}{hv.km > 0.5 ? ` · ${fmtNum(hv.km, 1)} km` : ''}{hv.up > 50 ? ` · ${fmtInt(hv.up)} hm` : ''} · {hv.sports.join(', ')}</span>
               ) : <span className="text-muted-foreground"> · hviledag</span>}
             </p>
-          ) : <p className="text-muted-foreground">Hold musepekeren over en dag for detaljer. Trykk for å åpne økten eller dagen.</p>}
+          ) : <p className="text-muted-foreground">{touch ? 'Trykk på en dag for detaljer, og en gang til for å åpne økten.' : 'Hold musepekeren over en dag for detaljer. Trykk for å åpne økten eller dagen.'}</p>}
         </div>
         <div className="text-muted-foreground flex items-center gap-1.5">
           <span>Mindre</span>
@@ -141,6 +142,7 @@ export function Overview() {
   const [metric, setMetric] = useState<Metric>('dist')
   const [gran, setGran] = useState<Gran | 'auto'>('auto')
   const today = todayStr()
+  const calWeeks = useNarrow() ? 22 : 53
   const g: Gran = gran === 'auto' ? autoGran(range.days) : gran
   const s = useMemo(() => sumBy(acts), [acts])
   const p = useMemo(() => sumBy(prevActs), [prevActs])
@@ -197,7 +199,7 @@ export function Overview() {
         title="Utvikling over tid"
         desc={`Trykk på en søyle for å zoome inn · ${g === 'day' ? 'per dag' : g === 'week' ? 'per uke' : g === 'month' ? 'per måned' : 'per år'}`}
         action={
-          <div className="flex w-max items-center gap-2 sm:w-auto sm:flex-wrap">
+          <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" size="icon-sm" onClick={resetChart} disabled={isDefault} aria-label="Tilbake til standardvisning" title="Tilbake til alle år, per år">
               <RotateCcw />
             </Button>
@@ -255,8 +257,8 @@ export function Overview() {
         </ChartCard>
       </div>
 
-      <ChartCard title="Aktivitetskalender" desc={`Treningstid per dag, siste 53 uker til ${fmtDate(range.to > today ? today : range.to)}${sports.length ? ` · ${sports.join(", ")}` : ""}`}>
-        <Heatmap acts={sportActs} to={range.to > today ? today : range.to} onDay={(d) => { const day = sportActs.filter((a) => dayKey(a.d) === d); if (day.length === 1) open(day[0].id); else goRange(d, d) }} />
+      <ChartCard title="Aktivitetskalender" desc={`Treningstid per dag, siste ${calWeeks} uker til ${fmtDate(range.to > today ? today : range.to)}${sports.length ? ` · ${sports.join(", ")}` : ""}`}>
+        <Heatmap acts={sportActs} weeks={calWeeks} to={range.to > today ? today : range.to} onDay={(d) => { const day = sportActs.filter((a) => dayKey(a.d) === d); if (day.length === 1) open(day[0].id); else goRange(d, d) }} />
       </ChartCard>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -273,7 +275,7 @@ export function Overview() {
               <TableHeader><TableRow><TableHead>Periode</TableHead><TableHead className="text-right">Økter</TableHead><TableHead className="text-right">km</TableHead><TableHead className="text-right">Tid</TableHead><TableHead className="text-right">Høyde</TableHead></TableRow></TableHeader>
               <TableBody>
                 {table.map((r) => (
-                  <TableRow key={r.k} className="cursor-pointer" onClick={() => { const [f, t] = bucketRange(r.k, tg); goRange(f, t) }}>
+                  <TableRow key={r.k} className="cursor-pointer outline-none focus-visible:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-inset" {...rowAction(() => { const [f, t] = bucketRange(r.k, tg); goRange(f, t) })}>
                     <TableCell className="font-medium">{bucketLabel(r.k, tg)}</TableCell>
                     <TableCell className="text-right tabular-nums">{r.count}</TableCell>
                     <TableCell className="text-right tabular-nums">{fmtInt(r.dist / 1000)}</TableCell>

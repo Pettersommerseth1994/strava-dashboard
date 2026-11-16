@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
 import { CartesianGrid, ComposedChart, Line, Scatter, XAxis, YAxis } from 'recharts'
-import { Award, Calendar, Flame, HeartPulse, Mountain, Route, Thermometer, Timer, Trophy, Zap } from 'lucide-react'
+import { Award, Calendar, ExternalLink, Flame, HeartPulse, Mountain, Route, Thermometer, Timer, Trophy, Zap } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { ChartCard, SportDot, hitDot } from '@/components/common'
+import { ChartCard, SportDot, hitDot, rowAction } from '@/components/common'
 import { Badges } from '@/components/badges'
 import { useStore } from '@/lib/store'
 import {
@@ -23,9 +24,9 @@ function RecCard({ icon: Icon, title, value, a, sub, onClick }: { icon: typeof R
       <Card size="sm" className="hover:ring-foreground/30 relative h-full overflow-hidden transition-shadow hover:ring-1">
         <div className="absolute inset-y-0 left-0 w-1" style={{ background: a ? sportColor(a.t) : 'var(--border)' }} />
         <CardContent className="min-w-0 pl-4 sm:pl-5">
-          <div className="text-muted-foreground flex items-center gap-1.5 text-[11px] font-medium tracking-wide uppercase sm:text-xs"><Icon className="size-3.5 shrink-0" /><span className="truncate">{title}</span></div>
+          <div className="text-muted-foreground flex items-center gap-1.5 text-[11px] font-medium tracking-wide uppercase sm:text-xs"><Icon className="size-3.5 shrink-0" /><span className="sm:truncate">{title}</span></div>
           <p className="mt-1 text-lg font-semibold tabular-nums sm:text-2xl">{value}</p>
-          <p className="mt-1 truncate text-sm">{a ? a.n : sub}</p>
+          <p className="mt-1 line-clamp-2 text-sm leading-snug">{a ? a.n : sub}</p>
           <p className="text-muted-foreground text-xs">{a ? `${a.t} · ${fmtDate(a.d)}` : ''}</p>
         </CardContent>
       </Card>
@@ -34,13 +35,12 @@ function RecCard({ icon: Icon, title, value, a, sub, onClick }: { icon: typeof R
 }
 
 export function Records() {
-  const { all, acts, open, goRange } = useStore()
-  const [scope, setScope] = useState<'all' | 'period'>('all')
+  const { periodActs, open, goRange } = useStore()
   const [sport, setSport] = useState('Løpetur')
   const [beKey, setBeKey] = useState('5k')
   const [topMetric, setTopMetric] = useState('dist')
 
-  const pool = useMemo(() => (scope === 'all' ? all : acts).filter((a) => sport === 'Alle' || a.t === sport), [all, acts, scope, sport])
+  const pool = useMemo(() => periodActs.filter((a) => sport === 'Alle' || a.t === sport), [periodActs, sport])
   const max = (f: (a: Activity) => number | null) => pool.reduce<Activity | undefined>((b, a) => { const v = f(a); return v != null && (!b || v > (f(b) ?? -Infinity)) ? a : b }, undefined)
 
   const bests = useMemo(() => Object.keys(BE_LABELS).map((k) => {
@@ -85,38 +85,41 @@ export function Records() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
-        <div className="no-scrollbar -mx-4 max-w-[calc(100%+2rem)] overflow-x-auto px-4 sm:mx-0 sm:max-w-full sm:px-0">
+        <div className="max-w-full">
           <ToggleGroup value={[sport]} onValueChange={(v) => v[0] && setSport(v[0])} variant="outline" size="sm">
             {SPORTS.map((s) => <ToggleGroupItem key={s} value={s}>{s}</ToggleGroupItem>)}
           </ToggleGroup>
         </div>
-        <ToggleGroup value={[scope]} onValueChange={(v) => v[0] && setScope(v[0] as 'all' | 'period')} variant="outline" size="sm">
-          <ToggleGroupItem value="all">Hele historikken</ToggleGroupItem>
-          <ToggleGroupItem value="period">Valgt periode</ToggleGroupItem>
-        </ToggleGroup>
         <Badge variant="secondary">{pool.length} økter</Badge>
       </div>
 
       {bests.length > 0 && (
-        <div className="grid gap-6 lg:grid-cols-5">
-          <ChartCard className="lg:col-span-2" title="Personlige rekorder" desc="Raskeste sammenhengende innsats i én økt · trykk for å se utviklingen">
+        <div className="grid gap-6 xl:grid-cols-5">
+          <ChartCard className="xl:col-span-3" title="Personlige rekorder" desc="Raskeste sammenhengende innsats i én økt · trykk på en rad for å se utviklingen, eller åpne økten med knappen">
             <Table>
-              <TableHeader><TableRow><TableHead>Distanse</TableHead><TableHead className="text-right">Tid</TableHead><TableHead className="hidden text-right sm:table-cell">{foot ? 'Pace' : 'Fart'}</TableHead><TableHead className="text-right">Dato</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>Distanse</TableHead><TableHead className="text-right">Tid</TableHead><TableHead className="hidden text-right sm:table-cell">{foot ? 'Pace' : 'Fart'}</TableHead><TableHead className="hidden text-right sm:table-cell">Dato</TableHead><TableHead className="w-px"><span className="sr-only">Åpne økten</span></TableHead></TableRow></TableHeader>
               <TableBody>
                 {bests.map((r) => (
-                  <TableRow key={r.k} className={`cursor-pointer ${r.k === beK ? 'bg-muted' : ''}`} onClick={() => setBeKey(r.k)}>
+                  <TableRow key={r.k} className={`cursor-pointer outline-none focus-visible:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-inset ${r.k === beK ? 'bg-muted' : ''}`} {...rowAction(() => setBeKey(r.k))}>
                     <TableCell className="font-medium"><span className="flex items-center gap-2"><Trophy className="size-3.5 text-[var(--brand)]" />{BE_LABELS[r.k]}</span></TableCell>
                     <TableCell className="text-right font-semibold tabular-nums">
-                      <button className="hover:underline" onClick={(e) => { e.stopPropagation(); open(r.best.id) }}>{fmtClock(r.best.be![r.k][0])}</button>
+                      {fmtClock(r.best.be![r.k][0])}
+                      <span className="text-muted-foreground block text-[11px] font-normal sm:hidden">{foot ? fmtPace(BE_DIST[r.k], r.best.be![r.k][0]) : `${fmtNum((BE_DIST[r.k] / r.best.be![r.k][0]) * 3.6, 1)} km/t`} · {fmtDate(r.best.d)}</span>
                     </TableCell>
                     <TableCell className="hidden text-right tabular-nums sm:table-cell">{foot ? fmtPace(BE_DIST[r.k], r.best.be![r.k][0]) : `${fmtNum((BE_DIST[r.k] / r.best.be![r.k][0]) * 3.6, 1)} km/t`}</TableCell>
-                    <TableCell className="text-muted-foreground text-right whitespace-nowrap">{fmtDate(r.best.d)}</TableCell>
+                    <TableCell className="text-muted-foreground hidden text-right whitespace-nowrap sm:table-cell">{fmtDate(r.best.d)}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="outline" size="sm" className="gap-1.5" aria-label={`Åpne økten med ${BE_LABELS[r.k]}-rekorden`}
+                        onClick={(e) => { e.stopPropagation(); open(r.best.id) }} onKeyDown={(e) => e.stopPropagation()}>
+                        <span className="max-sm:sr-only">Åpne</span><ExternalLink className="size-3.5" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </ChartCard>
-          <ChartCard className="lg:col-span-3" title={`Rekordutvikling · ${beK ? BE_LABELS[beK] : ''}`} desc="Hver prikk er en økt, trappelinjen viser rekorden gjennom tid · trykk på en prikk">
+          <ChartCard className="xl:col-span-2" title={`Rekordutvikling · ${beK ? BE_LABELS[beK] : ''}`} desc="Hver prikk er en økt, trappelinjen viser rekorden gjennom tid · trykk på en prikk">
             <ChartContainer config={{ y: { label: 'Tid', color: sportColor(sport === 'Alle' ? 'Løpetur' : sport) } }} className="h-72 w-full">
               <ComposedChart>
                 <CartesianGrid vertical={false} />
@@ -165,9 +168,9 @@ export function Records() {
           <TableHeader><TableRow><TableHead className="w-8">#</TableHead><TableHead>Økt</TableHead><TableHead className="hidden sm:table-cell">Dato</TableHead><TableHead className="text-right">{tm.label}</TableHead></TableRow></TableHeader>
           <TableBody>
             {top.map((x, i) => (
-              <TableRow key={x.a.id} className="cursor-pointer" onClick={() => open(x.a.id)}>
+              <TableRow key={x.a.id} className="cursor-pointer outline-none focus-visible:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-inset" {...rowAction(() => open(x.a.id))}>
                 <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                <TableCell><span className="flex items-center gap-2"><SportDot t={x.a.t} /><span className="max-w-xs truncate">{x.a.n}</span>{isFoot(x.a.t) ? null : <span className="text-muted-foreground text-xs">{x.a.t}</span>}</span></TableCell>
+                <TableCell className="max-sm:whitespace-normal"><span className="flex items-center gap-2"><SportDot t={x.a.t} /><span className="min-w-0"><span className="line-clamp-2 sm:line-clamp-1 sm:max-w-xs">{x.a.n}</span><span className="text-muted-foreground block text-[11px] sm:hidden">{fmtDate(x.a.d)} · {x.a.t}</span></span>{isFoot(x.a.t) ? null : <span className="text-muted-foreground hidden text-xs sm:inline">{x.a.t}</span>}</span></TableCell>
                 <TableCell className="text-muted-foreground hidden whitespace-nowrap sm:table-cell">{fmtDate(x.a.d)}</TableCell>
                 <TableCell className="text-right font-semibold tabular-nums">{tm.fmt(x.v)} <span className="text-muted-foreground text-xs font-normal">{tm.unit}</span></TableCell>
               </TableRow>

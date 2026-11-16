@@ -72,14 +72,13 @@ const mkPts = (acts: Activity[], f: (a: Activity) => number | null): Pt[] =>
 const SPORTS = ['Løpetur', 'Langrenn', 'Rulleski', 'Sykkeltur']
 
 export function Progress() {
-  const { all, acts } = useStore()
+  const { periodActs } = useStore()
   const [sport, setSport] = useState('Løpetur')
-  const [scope, setScope] = useState<'all' | 'period'>('all')
   const [minKm, setMinKm] = useState('3')
   const [beKey, setBeKey] = useState('5k')
   const [metric, setMetric] = useState('hr')
   const [win, setWin] = useState('10')
-  const pool = useMemo(() => (scope === 'all' ? all : acts).filter((a) => a.t === sport), [all, acts, scope, sport])
+  const pool = useMemo(() => periodActs.filter((a) => a.t === sport), [periodActs, sport])
   const color = sportColor(sport)
   const foot = isFoot(sport)
   const mk = Number(minKm) * 1000
@@ -107,15 +106,11 @@ export function Progress() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
-        <div className="no-scrollbar -mx-4 max-w-[calc(100%+2rem)] overflow-x-auto px-4 sm:mx-0 sm:max-w-full sm:px-0">
+        <div className="max-w-full">
           <ToggleGroup value={[sport]} onValueChange={(v) => v[0] && setSport(v[0])} variant="outline" size="sm">
             {SPORTS.map((s) => <ToggleGroupItem key={s} value={s}>{s}</ToggleGroupItem>)}
           </ToggleGroup>
         </div>
-        <ToggleGroup value={[scope]} onValueChange={(v) => v[0] && setScope(v[0] as 'all' | 'period')} variant="outline" size="sm">
-          <ToggleGroupItem value="all">Hele historikken</ToggleGroupItem>
-          <ToggleGroupItem value="period">Valgt periode</ToggleGroupItem>
-        </ToggleGroup>
         <Select value={minKm} onValueChange={(v) => v && setMinKm(v)} items={['0', '3', '5', '10', '15'].map((v) => ({ value: v, label: v === '0' ? 'Ingen minimumsdistanse' : `Minst ${v} km` }))}>
           <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
           <SelectContent>{['0', '3', '5', '10', '15'].map((v) => <SelectItem key={v} value={v}>{v === '0' ? 'Ingen minimumsdistanse' : `Minst ${v} km`}</SelectItem>)}</SelectContent>

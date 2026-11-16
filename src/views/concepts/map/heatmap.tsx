@@ -69,19 +69,19 @@ function HeatmapInner({ tracks }: { tracks: TrackMap }) {
 
   return (
     <div className="space-y-3">
-      <div className="no-scrollbar -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-        <div className="flex w-max items-center gap-2">
+      <div>
+        <div className="flex flex-wrap items-center gap-2">
           <ToggleGroup value={[sport]} onValueChange={(v) => v[0] && (setSport(v[0]), setSel(null))} variant="outline" size="sm">
             {SPORTS.map((s) => <ToggleGroupItem key={s} value={s}>{s}</ToggleGroupItem>)}
           </ToggleGroup>
-          <div className="bg-foreground/20 mx-1 h-5 w-px" />
+          <div className="bg-foreground/20 mx-1 hidden h-5 w-px sm:block" />
           <ToggleGroup value={[year]} onValueChange={(v) => v[0] && (setYear(v[0]), setSel(null))} variant="outline" size="sm">
             {years.map((y) => <ToggleGroupItem key={y} value={y}>{y}</ToggleGroupItem>)}
           </ToggleGroup>
         </div>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-muted-foreground text-xs tabular-nums"><b className="text-foreground">{lines.length}</b> ruter · {fmtKm(km, 0)} km · trykk på en rute</p>
+        <p className="text-muted-foreground text-xs tabular-nums"><b className="text-foreground">{lines.length}</b> ruter · {fmtKm(km, 0)} km · trykk på en rute<span className="hidden [@media(pointer:coarse)]:inline"> · bruk to fingre for å flytte kartet</span></p>
       </div>
       <div className="relative">
         <MapBox boxRef={box} className="h-[22rem] sm:h-[30rem]" />

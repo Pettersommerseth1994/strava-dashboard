@@ -41,7 +41,7 @@ export function MediaWall() {
   if (!items.length) return <Loading empty />
 
   const toggle = (v: string, set: (s: string) => void, opts: [string, string][]) => (
-    <div className="no-scrollbar -mx-4 max-w-[calc(100%+2rem)] overflow-x-auto px-4 sm:mx-0 sm:max-w-full sm:px-0">
+    <div className="max-w-full">
       <ToggleGroup value={[v]} onValueChange={(x) => { if (x[0]) { set(x[0]); setPage(0) } }} variant="outline" size="sm">
         {opts.map(([k, l]) => <ToggleGroupItem key={k} value={k}>{l}</ToggleGroupItem>)}
       </ToggleGroup>

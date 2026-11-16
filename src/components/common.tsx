@@ -1,4 +1,4 @@
-import type { Key, ReactNode } from 'react'
+import { useEffect, useState, type Key, type ReactNode } from 'react'
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
@@ -34,7 +34,7 @@ export function ChartCard({ title, desc, action, children, className }: { title:
     <Card className={className}>
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2">
         <div className="min-w-0"><CardTitle>{title}</CardTitle>{desc && <CardDescription>{desc}</CardDescription>}</div>
-        {action && <div className="no-scrollbar -mx-4 max-w-[calc(100%+2rem)] overflow-x-auto px-4 sm:mx-0 sm:max-w-full sm:overflow-visible sm:px-0">{action}</div>}
+        {action && <div className="max-w-full min-w-0">{action}</div>}
       </CardHeader>
       <CardContent>{children}</CardContent>
     </Card>
@@ -81,4 +81,28 @@ export function hitDot(onPick: (id: string) => void, opts: { r?: number; hit?: n
       </g>
     )
   }
+}
+
+/**
+ * Gjør en klikkbar rad tilgjengelig med tastatur: Tab for å nå den, Enter eller mellomrom for å åpne.
+ * Bruk: <TableRow {...rowAction(() => open(id))}>
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function rowAction(fn: () => void) {
+  return {
+    tabIndex: 0,
+    onClick: fn,
+    onKeyDown: (e: React.KeyboardEvent) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); fn() } },
+  }
+}
+
+/** true på smale skjermer (mobil) – følger med når vinduet endrer størrelse */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useNarrow(query = '(max-width: 639px)') {
+  const [on, setOn] = useState(() => matchMedia(query).matches)
+  useEffect(() => {
+    const m = matchMedia(query); const f = () => setOn(m.matches)
+    f(); m.addEventListener('change', f); return () => m.removeEventListener('change', f)
+  }, [query])
+  return on
 }

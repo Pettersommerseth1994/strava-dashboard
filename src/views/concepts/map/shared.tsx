@@ -56,7 +56,9 @@ export function useLeafletMap(ref: RefObject<HTMLDivElement | null>, opts: L.Map
   const tiles = useRef<L.TileLayer | null>(null)
   useEffect(() => {
     if (!ref.current) return
-    const m = L.map(ref.current, { scrollWheelZoom: false, zoomSnap: 0.25, preferCanvas: true, attributionControl: false, ...opts })
+    // På berøringsskjerm ruller én finger siden; to fingre flytter og zoomer kartet
+    const touch = matchMedia('(pointer: coarse)').matches
+    const m = L.map(ref.current, { scrollWheelZoom: false, zoomSnap: 0.25, preferCanvas: true, attributionControl: false, dragging: !touch, ...opts })
     m.setView([63.43, 10.4], 11)
     const ro = new ResizeObserver(() => m.invalidateSize())
     ro.observe(ref.current)

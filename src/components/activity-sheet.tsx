@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { ChevronLeft, ChevronRight, Link2, Trophy } from 'lucide-react'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -6,11 +6,15 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { SessionMedia } from '@/components/session-media'
 import { useStore } from '@/lib/store'
 import {
   type Activity, type Detail, effortVdot, BE_DIST, BE_LABELS, ZONE_COLORS, fmtClock, fmtDateTime, fmtDur, fmtInt, fmtKm, fmtNum, fmtPace,
   fmtPaceSec, fmtSpeed, isFoot, sportColor,
 } from '@/lib/data'
+
+/** Kartet lastes først når en økt åpnes (kartbiblioteket er stort) */
+const SessionMap = lazy(() => import('@/components/session-map'))
 
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
@@ -114,6 +118,8 @@ export function ActivitySheet() {
             </div>
           )}
 
+          <SessionMedia id={a.id} name={a.n} />
+
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {a.dist > 0 && <Stat label="Distanse" value={`${fmtKm(a.dist, 2)} km`} />}
             <Stat label="Bevegelsestid" value={fmtDur(a.mov)} sub={a.el > a.mov + 60 ? `Medgått ${fmtDur(a.el)}` : undefined} />
@@ -144,6 +150,8 @@ export function ActivitySheet() {
               </div>
             </div>
           )}
+
+          <Suspense fallback={null}><SessionMap id={a.id} det={det} foot={foot} /></Suspense>
 
           {a.det && !det && <p className="text-muted-foreground text-sm">Laster øktdata …</p>}
           {chart && (

@@ -193,3 +193,96 @@
 /* Kart: OSM-flisene finnes bare lyse – mørk modus lages ved å invertere dem */
 .dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) saturate(0.4); }
 .leaflet-container { background: var(--muted); font-family: inherit; }
+
+/* =====================================================================
+   Glassdesign
+   - Bakgrunn: nøytral flate med to svake lysglimt (oransje + kjølig blå)
+   - .glass: gjennomskinnelig flate med uskarp bakgrunn, hårfin kant og lys toppkant
+   - Kort er gjennomskinnelige uten egen blur (bakgrunnen bak dem står stille)
+   ===================================================================== */
+:root {
+  --app-bg: oklch(0.972 0.004 255);
+  --glow-1: oklch(0.82 0.11 58 / 0.3);
+  --glow-2: oklch(0.84 0.06 250 / 0.42);
+  --glass: oklch(1 0 0 / 0.66);
+  --glass-strong: oklch(1 0 0 / 0.8);
+  --glass-border: oklch(0.25 0.02 255 / 0.09);
+  --glass-hi: oklch(1 0 0 / 0.95);
+  --glass-shadow: 0 1px 2px oklch(0.25 0.02 255 / 0.04), 0 14px 34px -18px oklch(0.25 0.02 255 / 0.2);
+}
+.dark {
+  --app-bg: oklch(0.128 0.008 262);
+  --glow-1: oklch(0.73 0.16 52 / 0.12);
+  --glow-2: oklch(0.56 0.13 258 / 0.2);
+  --glass: oklch(0.3 0.012 262 / 0.36);
+  --glass-strong: oklch(0.19 0.01 262 / 0.74);
+  --glass-border: oklch(1 0 0 / 0.09);
+  --glass-hi: oklch(1 0 0 / 0.075);
+  --glass-shadow: 0 1px 2px oklch(0 0 0 / 0.35), 0 18px 44px -22px oklch(0 0 0 / 0.75);
+}
+
+body { background: var(--app-bg); }
+.app-bg {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(58rem 38rem at 6% -8%, var(--glow-1), transparent 62%),
+    radial-gradient(70rem 48rem at 104% 108%, var(--glow-2), transparent 62%),
+    radial-gradient(36rem 26rem at 78% 4%, color-mix(in oklch, var(--glow-2) 55%, transparent), transparent 65%),
+    var(--app-bg);
+}
+
+.glass, .glass-strong {
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 0 var(--glass-hi), var(--glass-shadow);
+  -webkit-backdrop-filter: blur(22px) saturate(1.6);
+  backdrop-filter: blur(22px) saturate(1.6);
+}
+.glass { background: var(--glass); }
+.glass-strong { background: var(--glass-strong); }
+
+/* Kort */
+[data-slot='card'] {
+  background: var(--glass);
+  box-shadow: inset 0 1px 0 0 var(--glass-hi), 0 0 0 1px var(--glass-border), var(--glass-shadow);
+}
+
+/* Menyer, popovere, dialoger og sidepaneler */
+[data-slot='dropdown-menu-content'], [data-slot='select-content'], [data-slot='popover-content'],
+[data-slot='dialog-content'], [data-slot='sheet-content'] {
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  backdrop-filter: blur(28px) saturate(1.6);
+  box-shadow: inset 0 1px 0 0 var(--glass-hi), 0 0 0 1px var(--glass-border), 0 24px 60px -20px oklch(0 0 0 / 0.45);
+}
+[data-slot='sheet-overlay'], [data-slot='dialog-overlay'] { background: oklch(0 0 0 / 0.35); }
+
+/* Myk overgang der innholdet ruller inn under topplinjen */
+.scroll-edge { position: sticky; top: 0; z-index: 30; }
+.scroll-edge::before {
+  content: ''; position: absolute; inset: 0 0 -1.25rem 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(to bottom, color-mix(in oklch, var(--app-bg) 88%, transparent) 35%, transparent);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 50%, transparent);
+  mask-image: linear-gradient(to bottom, #000 50%, transparent);
+}
+
+/* Navigasjon i sidepanelet */
+.nav-item {
+  display: flex; align-items: center; gap: 0.625rem; height: 2.25rem; padding: 0 0.625rem;
+  border-radius: 0.625rem; font-size: 0.875rem; color: var(--muted-foreground);
+  transition: background-color 150ms, color 150ms; white-space: nowrap; width: 100%;
+}
+.nav-item:hover { background: color-mix(in oklch, var(--foreground) 6%, transparent); color: var(--foreground); }
+.nav-item[aria-current='page'] {
+  background: color-mix(in oklch, var(--foreground) 9%, transparent); color: var(--foreground); font-weight: 500;
+  box-shadow: inset 0 1px 0 0 var(--glass-hi);
+}
+.nav-item[aria-current='page'] svg:first-child { color: var(--brand); }
+.nav-item:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+/* Verktøylinjer brytes til flere linjer i stedet for å forsvinne ut av skjermen */
+[data-slot='toggle-group'] { flex-wrap: wrap; max-width: 100%; row-gap: 0.375rem; }

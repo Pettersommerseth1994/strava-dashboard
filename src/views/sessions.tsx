@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
 import { CartesianGrid, ComposedChart, Scatter, XAxis, YAxis } from 'recharts'
-import { ArrowDown, ArrowUp, Download, Search } from 'lucide-react'
+import { ArrowDown, ArrowUp, Camera, Download, Flame, Gauge, HeartPulse, Mountain, Search, Timer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ChartContainer, ChartTooltip, type ChartConfig } from '@/components/ui/chart'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { ChartCard, SportDot, hitDot } from '@/components/common'
+import { ChartCard, SportDot, hitDot, rowAction } from '@/components/common'
 import { useStore } from '@/lib/store'
+import { useMedia } from '@/views/concepts/local'
 import { type Activity, MAIN_SPORTS, METRICS, METRIC, SPORT_COLORS, fmtClock, fmtDate, fmtDur, fmtInt, fmtKm, fmtMonth, fmtSpeed, sportOf, toCsv, ts } from '@/lib/data'
 
 type Col = { k: string; label: string; get: (a: Activity) => number | string; cell: (a: Activity) => string; right?: boolean; hide?: boolean }
@@ -24,8 +25,14 @@ const COLS: Col[] = [
   { k: 'load', label: 'Belastn.', get: (a) => a.load, cell: (a) => fmtInt(a.load), right: true, hide: true },
 ]
 
+const SORTS: [string, string][] = [
+  ['d:-1', 'Nyeste først'], ['d:1', 'Eldste først'], ['dist:-1', 'Lengst distanse'], ['mov:-1', 'Lengst tid'],
+  ['pace:-1', 'Høyest fart'], ['up:-1', 'Mest høyde'], ['hr:-1', 'Høyest snittpuls'], ['load:-1', 'Høyest belastning'],
+]
+
 export function Sessions() {
   const { acts, open } = useStore()
+  const media = useMedia()
   const [q, setQ] = useState('')
   const [sort, setSort] = useState<{ k: string; dir: 1 | -1 }>({ k: 'd', dir: -1 })
   const [page, setPage] = useState(0)
@@ -40,7 +47,7 @@ export function Sessions() {
   const pages = Math.max(1, Math.ceil(rows.length / PS))
   const pg = Math.min(page, pages - 1)
   const th = (c: Col) => (
-    <TableHead key={c.k} className={`${c.right ? 'text-right' : ''} ${c.hide ? 'hidden md:table-cell' : ''} cursor-pointer select-none`} onClick={() => { setSort((s) => ({ k: c.k, dir: s.k === c.k ? (-s.dir as 1 | -1) : -1 })); setPage(0) }}>
+    <TableHead key={c.k} className={`${c.right ? 'text-right' : ''} cursor-pointer select-none`} onClick={() => { setSort((s) => ({ k: c.k, dir: s.k === c.k ? (-s.dir as 1 | -1) : -1 })); setPage(0) }}>
       <span className="inline-flex items-center gap-1">{c.label}{sort.k === c.k && (sort.dir === 1 ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />)}</span>
     </TableHead>
   )
@@ -52,26 +59,64 @@ export function Sessions() {
     <ChartCard title="Alle økter" desc={`${rows.length} økter i valgt periode og idrett · trykk på en rad for detaljer`}
       action={<Button variant="outline" size="sm" onClick={download}><Download />Last ned CSV</Button>}>
       <div className="mb-3 flex flex-wrap gap-2">
-        <div className="relative"><Search className="text-muted-foreground absolute top-2 left-2.5 size-4" /><Input placeholder="Søk i navn, idrett, utstyr …" className="w-64 pl-8" value={q} onChange={(e) => { setQ(e.target.value); setPage(0) }} /></div>
+        <div className="relative w-full sm:w-64"><Search className="text-muted-foreground absolute top-2 left-2.5 size-4" /><Input placeholder="Søk i navn, idrett, utstyr …" aria-label="Søk i økter" className="w-full pl-8" value={q} onChange={(e) => { setQ(e.target.value); setPage(0) }} /></div>
         <Select value={minKm} onValueChange={(v) => { if (v) { setMinKm(v); setPage(0) } }} items={['0', '5', '10', '20', '30'].map((v) => ({ value: v, label: v === '0' ? 'Alle distanser' : `Minst ${v} km` }))}>
-          <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="min-w-0 flex-1 sm:w-44 sm:flex-none"><SelectValue /></SelectTrigger>
           <SelectContent>{['0', '5', '10', '20', '30'].map((v) => <SelectItem key={v} value={v}>{v === '0' ? 'Alle distanser' : `Minst ${v} km`}</SelectItem>)}</SelectContent>
         </Select>
+        {/* På mobil sorteres listen med en velger, siden kolonneoverskriftene ikke vises */}
+        <Select value={`${sort.k}:${sort.dir}`} onValueChange={(v) => { if (v) { const [k, d] = v.split(':'); setSort({ k, dir: +d as 1 | -1 }); setPage(0) } }} items={SORTS.map(([v, l]) => ({ value: v, label: l }))}>
+          <SelectTrigger className="min-w-0 flex-1 md:hidden" aria-label="Sortering"><SelectValue /></SelectTrigger>
+          <SelectContent>{SORTS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+        </Select>
       </div>
-      <Table>
-        <TableHeader><TableRow>{COLS.filter((c) => c.k !== 't').map(th)}</TableRow></TableHeader>
-        <TableBody>
-          {rows.slice(pg * PS, pg * PS + PS).map((a) => (
-            <TableRow key={a.id} className="cursor-pointer" onClick={() => open(a.id)}>
-              {COLS.filter((c) => c.k !== 't').map((c) => (
-                <TableCell key={c.k} className={`${c.right ? 'text-right tabular-nums' : ''} ${c.hide ? 'hidden md:table-cell' : ''} ${c.k === 'd' ? 'whitespace-nowrap' : ''}`}>
-                  {c.k === 'n' ? <span className="flex items-center gap-2"><SportDot t={a.t} /><span className="max-w-[18rem] truncate">{a.n}</span><span className="text-muted-foreground hidden text-xs lg:inline">{a.t}</span></span> : c.cell(a)}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+
+      {rows.length === 0 && <p className="text-muted-foreground py-10 text-center text-sm">Ingen økter passer søket.</p>}
+
+      {/* Mobil: kort per økt med alle tallene */}
+      <ul className="divide-y md:hidden">
+        {rows.slice(pg * PS, pg * PS + PS).map((a) => (
+          <li key={a.id}>
+            <button onClick={() => open(a.id)} className="hover:bg-muted/50 -mx-1 flex w-[calc(100%+0.5rem)] items-start gap-2.5 rounded-lg px-1 py-2.5 text-left">
+              <SportDot t={a.t} className="mt-1.5" />
+              <span className="min-w-0 flex-1">
+                <span className="flex items-baseline justify-between gap-3">
+                  <span className="line-clamp-1 font-medium">{a.n}</span>
+                  <span className="shrink-0 font-semibold tabular-nums">{a.dist ? `${fmtKm(a.dist)} km` : fmtDur(a.mov)}</span>
+                </span>
+                <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                  {fmtDate(a.d)} · {a.t}
+                  {media?.[a.id] && <Camera className="size-3" aria-label="Har bilder eller video" />}
+                </span>
+                <span className="text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs tabular-nums">
+                  {!!a.dist && <span className="flex items-center gap-1"><Timer className="size-3" />{fmtDur(a.mov)}</span>}
+                  {!!a.dist && <span className="flex items-center gap-1"><Gauge className="size-3" />{fmtSpeed(a)}</span>}
+                  {a.up > 0 && <span className="flex items-center gap-1"><Mountain className="size-3" />{fmtInt(a.up)} m</span>}
+                  {!!a.hr && <span className="flex items-center gap-1"><HeartPulse className="size-3" />{Math.round(a.hr)}{a.mhr ? ` / ${Math.round(a.mhr)}` : ''}</span>}
+                  {a.load > 0 && <span className="flex items-center gap-1"><Flame className="size-3" />{fmtInt(a.load)}</span>}
+                </span>
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      <div className="hidden md:block">
+        <Table>
+          <TableHeader><TableRow>{COLS.filter((c) => c.k !== 't').map(th)}</TableRow></TableHeader>
+          <TableBody>
+            {rows.slice(pg * PS, pg * PS + PS).map((a) => (
+              <TableRow key={a.id} className="cursor-pointer outline-none focus-visible:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-inset" {...rowAction(() => open(a.id))}>
+                {COLS.filter((c) => c.k !== 't').map((c) => (
+                  <TableCell key={c.k} className={`${c.right ? 'text-right tabular-nums' : ''} ${c.k === 'd' ? 'whitespace-nowrap' : ''}`}>
+                    {c.k === 'n' ? <span className="flex items-center gap-2"><SportDot t={a.t} /><span className="max-w-[18rem] truncate">{a.n}</span>{media?.[a.id] && <Camera className="text-muted-foreground size-3.5 shrink-0" aria-label="Har bilder eller video" />}<span className="text-muted-foreground hidden text-xs lg:inline">{a.t}</span></span> : c.cell(a)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
       <div className="mt-3 flex items-center justify-between text-sm">
         <span className="text-muted-foreground">Side {pg + 1} av {pages}</span>
         <div className="flex gap-2"><Button variant="outline" size="sm" disabled={pg === 0} onClick={() => setPage(pg - 1)}>Forrige</Button><Button variant="outline" size="sm" disabled={pg >= pages - 1} onClick={() => setPage(pg + 1)}>Neste</Button></div>

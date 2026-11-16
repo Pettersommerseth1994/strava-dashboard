@@ -4,8 +4,13 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="alternate icon" type="image/png" href="./insyte-mark.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark light" />
     <title>Magnus – Treningsdashboard</title>
+    <script>
+      // Sett tema før første tegning, så siden ikke blinker lyst
+      try { if ((localStorage.getItem('theme') || 'dark') === 'dark') document.documentElement.classList.add('dark') } catch (e) { document.documentElement.classList.add('dark') }
+    </script>
   </head>
   <body>
     <div id="root"></div>

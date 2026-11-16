@@ -14,6 +14,7 @@ Skriver til public/minner/:
   vid/        – videoer, H.264 innenfor 640 × 480 (sideforholdet beholdes)
   poster/     – plakatbilde per video (jpg)
   tracks.json – GPS-spor der de første og siste 400 m er fjernet (personvernsone)
+  t/<id>.json – samme spor per økt, til kartet i øktpanelet
 """
 import json, math, os, shutil, subprocess, sys, tempfile
 from concurrent.futures import ThreadPoolExecutor
@@ -104,6 +105,15 @@ def main():
         t = simplify(trim(pts))
         if len(t) >= 2:
             pub_tracks[aid] = [[round(a, 4), round(b, 4)] for a, b in t]
+
+    # Ett spor per økt (høyere oppløsning) til kartet i øktpanelet – også med personvernsone
+    os.makedirs(os.path.join(out, 't'), exist_ok=True)
+    n_single = 0
+    for aid, pts in tracks.items():
+        t = trim(pts)
+        if len(t) >= 2:
+            json.dump([[round(a, 5), round(b, 5)] for a, b in t], open(os.path.join(out, 't', f'{aid}.json'), 'w'), separators=(',', ':'))
+            n_single += 1
 
     json.dump(res, open(os.path.join(out, 'media.json'), 'w'), separators=(',', ':'))
     json.dump(pub_tracks, open(os.path.join(out, 'tracks.json'), 'w'), separators=(',', ':'))
