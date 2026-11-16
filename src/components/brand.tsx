@@ -1,25 +1,33 @@
-const BASE = import.meta.env.BASE_URL
+import { useId } from 'react'
+import { cn } from '@/lib/utils'
 
-export function InsyteLogo({ className = 'h-[22px]' }: { className?: string }) {
-  return <img src={`${BASE}insyte-logo.png`} alt="Insyte" width={202} height={48} className={`${className} w-auto shrink-0 select-none dark:invert`} draggable={false} />
+/**
+ * Insyte-logoen: et tynt pluss med to buede innerhjørner, skåret ut av en avrundet firkant.
+ * Merket tegnes som SVG, så det er skarpt i alle størrelser og følger tekstfargen.
+ * Samme form ligger i public/favicon.svg.
+ */
+const PLUS = 'M17.4 8H22.6A9.4 9.4 0 0 0 32 17.4V22.6H22.6V32H17.4A9.4 9.4 0 0 0 8 22.6V17.4H17.4Z'
+
+/** Bare merket */
+export function LogoMark({ className }: { className?: string }) {
+  const id = useId()
+  return (
+    <svg viewBox="0 0 40 40" className={cn('size-6 shrink-0', className)} aria-hidden="true">
+      <mask id={id} maskUnits="userSpaceOnUse" x="0" y="0" width="40" height="40">
+        <rect width="40" height="40" rx="8" fill="#fff" />
+        <path d={PLUS} fill="#000" />
+      </mask>
+      <rect width="40" height="40" fill="currentColor" mask={`url(#${id})`} />
+    </svg>
+  )
 }
 
-export type BrandMeta = { name: string; since: string; count: string }
-
-/** Logo og profilbrikke øverst til venstre */
-export function Brand({ m }: { m: BrandMeta }) {
-  const parts = m.name.split(' ')
-  const initials = (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase()
+/** Merke + ordmerke */
+export function InsyteLogo({ className }: { className?: string }) {
   return (
-    <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-      <InsyteLogo />
-      <div className="flex min-w-0 items-center gap-2.5 rounded-full border p-1 sm:pr-3.5" title={m.name}>
-        <span className="bg-muted grid size-7 shrink-0 place-items-center rounded-full text-[11px] font-semibold">{initials}</span>
-        <div className="hidden min-w-0 leading-tight sm:block">
-          <p className="truncate text-xs font-medium">{m.name}</p>
-          <p className="text-muted-foreground truncate text-[10.5px] tabular-nums">{m.count} · siden {m.since}</p>
-        </div>
-      </div>
-    </div>
+    <span className={cn('flex items-center gap-2 select-none', className)} role="img" aria-label="Insyte">
+      <LogoMark className="size-[26px]" />
+      <span className="text-[21px] leading-none font-bold tracking-[-0.03em]">Insyte</span>
+    </span>
   )
 }

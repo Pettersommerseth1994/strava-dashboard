@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { type FilterSet, PeriodBar } from '@/components/filters'
-import { InsyteLogo } from '@/components/brand'
+import { InsyteLogo, LogoMark } from '@/components/brand'
 import { useNewThrowbacks } from '@/components/memories-badge'
 import { cn } from '@/lib/utils'
 import { routeUrl } from '@/lib/route'
@@ -88,8 +88,8 @@ export function Sidebar({ a, collapsed, meta }: { a: ShellActions; collapsed: bo
       <a href={routeUrl('oversikt')} onClick={(e) => { e.preventDefault(); a.go('oversikt') }} aria-label="Insyte – til oversikten"
         className={cn('flex h-10 shrink-0 items-center rounded-lg', collapsed ? 'justify-center' : 'px-2')}>
         {collapsed
-          ? <img src={`${import.meta.env.BASE_URL}insyte-mark.png`} alt="" width={43} height={43} className="size-6 dark:invert" draggable={false} />
-          : <InsyteLogo className="h-[22px]" />}
+          ? <LogoMark className="size-7" />
+          : <InsyteLogo />}
       </a>
 
       {collapsed ? (
@@ -187,7 +187,7 @@ export function TopBar({ a, v, sub, onToggleSidebar }: { a: ShellActions; v: Vie
     <div className="scroll-edge px-3 pt-3 md:px-5">
       <header className="glass flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl px-2.5 py-2 md:min-h-14 md:px-3">
         <Button variant="ghost" size="icon-sm" className="hidden md:inline-flex" onClick={onToggleSidebar} aria-label="Vis eller skjul menyen" title="Vis eller skjul menyen (⌘B)"><PanelLeft /></Button>
-        <img src={`${import.meta.env.BASE_URL}insyte-mark.png`} alt="Insyte" width={43} height={43} className="ml-1 size-6 md:hidden dark:invert" draggable={false} />
+        <LogoMark className="ml-1 size-7 md:hidden" />
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-[15px] leading-tight font-semibold tracking-tight">{v.label}</h1>
           <p className="text-muted-foreground truncate text-xs tabular-nums">{sub}</p>
